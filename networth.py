@@ -15,7 +15,8 @@ def load_accounts(apply_live: bool = True) -> dict[str, Any]:
     """Load accounts.json, falling back to accounts.example.json if missing.
 
     When apply_live=True, accounts whose `live_source` matches a configured
-    integration get their `value` overridden from the live source.
+    integration get their `value` overridden from the live source, and
+    properties with `value_source == "hpi"` get revalued via HM Land Registry.
     """
     path = ACCOUNTS_PATH if ACCOUNTS_PATH.exists() else EXAMPLE_PATH
     with path.open() as f:
@@ -23,7 +24,30 @@ def load_accounts(apply_live: bool = True) -> dict[str, Any]:
     data["_source"] = path.name
     if apply_live:
         _apply_live_balances(data)
+        _apply_hpi(data)
     return data
+
+
+def _apply_hpi(data: dict[str, Any]) -> None:
+    """Revalue properties whose value_source is 'hpi' via HM Land Registry."""
+    properties = data.get("properties", [])
+    if not any(p.get("value_source") == "hpi" for p in properties):
+        return
+    try:
+        from hpi import revalue
+    except ImportError:
+        return
+    for prop in properties:
+        try:
+            result = revalue(prop)
+        except Exception:
+            result = None
+        if result is None:
+            continue
+        prop["_hpi"] = result
+        if prop.get("value_source") == "hpi":
+            prop["_stored_current_value"] = prop.get("current_value")
+            prop["current_value"] = result["value"]
 
 
 def _apply_live_balances(data: dict[str, Any]) -> None:
@@ -55,6 +79,9 @@ def _apply_live_balances(data: dict[str, Any]) -> None:
             "provider": "starling",
             "balance": primary_balance,
             "cleared_balance": primary["cleared_balance"],
+            "main_balance": primary.get("main_balance"),
+            "spaces_total": primary.get("spaces_total"),
+            "spaces": primary.get("spaces", []),
             "fetched_at": summary.get("fetched_at"),
         }
 

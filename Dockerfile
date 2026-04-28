@@ -35,9 +35,9 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend files
-COPY main.py .
-COPY data_processor.py .
+# Copy backend modules
+COPY main.py data_processor.py networth.py pension_forecast.py starling.py hpi.py ./
+COPY accounts.example.json ./
 
 # Copy built React app from frontend-builder
 COPY --from=frontend-builder /app/dist ./dist

@@ -80,7 +80,13 @@
       "purchase_date": "2024-01-01",
       "purchase_price": 300000,
       "current_value": 310000,
-      "mortgage_outstanding": null
+      "mortgage_outstanding": null,
+      "value_source": "manual",
+      "_comment_value_source": "manual = use current_value as-is | hpi = override from HM Land Registry HPI | purchase = use purchase_price",
+      "region": "united-kingdom",
+      "_comment_region": "HPI region slug, e.g. united-kingdom, england, london, north-west, manchester, camden",
+      "property_subtype": "flat",
+      "_comment_property_subtype": "flat | terraced | semi-detached | detached | new-build (picks the subtype-specific HPI series)"
     }
   ],
   "liabilities": []

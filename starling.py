@@ -52,6 +52,11 @@ class StarlingClient:
     def balance(self, account_uid: str) -> dict:
         return self._get(f"/api/v2/accounts/{account_uid}/balance")
 
+    def list_spaces(self, account_uid: str) -> list[dict]:
+        """Return active saving spaces (formerly Saving Goals)."""
+        data = self._get(f"/api/v2/account/{account_uid}/savings-goals")
+        return [g for g in data.get("savingsGoalList", []) if g.get("state") == "ACTIVE"]
+
     def feed_items_since(self, account_uid: str, category_uid: str, since: datetime) -> list[dict]:
         ts = since.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
         path = f"/api/v2/feed/account/{account_uid}/category/{category_uid}"
@@ -78,11 +83,30 @@ def fetch_summary() -> dict[str, Any]:
     for acc in accounts:
         try:
             bal = client.balance(acc["accountUid"])
+            spaces_raw = client.list_spaces(acc["accountUid"])
         except StarlingError as e:
             items.append({"account_uid": acc["accountUid"], "error": str(e)})
             continue
-        eff = _to_amount(bal["effectiveBalance"]["minorUnits"])
-        cleared = _to_amount(bal["clearedBalance"]["minorUnits"])
+
+        main_eff = _to_amount(bal["effectiveBalance"]["minorUnits"])
+        main_cleared = _to_amount(bal["clearedBalance"]["minorUnits"])
+        # totalEffectiveBalance/totalClearedBalance include spaces; prefer them when present
+        eff = _to_amount(bal.get("totalEffectiveBalance", bal["effectiveBalance"])["minorUnits"])
+        cleared = _to_amount(bal.get("totalClearedBalance", bal["clearedBalance"])["minorUnits"])
+
+        spaces = []
+        for s in spaces_raw:
+            saved = _to_amount(s.get("totalSaved", {}).get("minorUnits", 0))
+            target_minor = (s.get("target") or {}).get("minorUnits")
+            spaces.append({
+                "uid": s.get("savingsGoalUid"),
+                "name": s.get("name"),
+                "saved": saved,
+                "target": _to_amount(target_minor) if target_minor else None,
+                "percent": s.get("savedPercentage"),
+            })
+        spaces_total = round(sum(s["saved"] for s in spaces), 2)
+
         total += eff
         items.append({
             "account_uid": acc["accountUid"],
@@ -92,6 +116,10 @@ def fetch_summary() -> dict[str, Any]:
             "type": acc.get("accountType"),
             "effective_balance": eff,
             "cleared_balance": cleared,
+            "main_balance": main_eff,
+            "main_cleared_balance": main_cleared,
+            "spaces_total": spaces_total,
+            "spaces": spaces,
         })
 
     return {

@@ -38,19 +38,47 @@ function AccountGroup({ type, items }) {
       <ul>
         {items.map(acc => (
           <li key={acc.id} className="account-row">
-            <div className="account-row-main">
-              <span className="account-name">
-                {acc.name}
-                {acc._live && <span className="live-badge" title={`Live from ${acc._live.provider} · fetched ${acc._live.fetched_at}`}>● LIVE</span>}
-              </span>
-              <span className="account-provider">
-                {acc.provider}
-                {acc._live && acc._live.cleared_balance != null && acc._live.cleared_balance !== acc._live.balance && (
-                  <span className="live-meta"> · cleared {formatGbpPrecise(acc._live.cleared_balance)}</span>
-                )}
-              </span>
+            <div className="account-row-stack">
+              <div className="account-row-head">
+                <div className="account-row-main">
+                  <span className="account-name">
+                    {acc.name}
+                    {acc._live && (
+                      <span className="live-badge" title={`Live from ${acc._live.provider} · fetched ${acc._live.fetched_at}`}>● LIVE</span>
+                    )}
+                  </span>
+                  <span className="account-provider">
+                    {acc.provider}
+                    {acc._live?.main_balance != null && (
+                      <span className="live-meta">
+                        {' · main '}{formatGbpPrecise(acc._live.main_balance)}
+                        {acc._live.spaces_total > 0 && <> · spaces {formatGbpPrecise(acc._live.spaces_total)}</>}
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <div className="account-row-value">{formatGbpPrecise(acc.value)}</div>
+              </div>
+              {acc._live?.spaces?.length > 0 && (
+                <ul className="spaces-list">
+                  {acc._live.spaces
+                    .filter(s => s.saved > 0 || (s.target != null && s.target > 0))
+                    .sort((a, b) => b.saved - a.saved)
+                    .map(s => (
+                      <li key={s.uid}>
+                        <span className="space-name">{s.name}</span>
+                        <span className="space-saved">{formatGbpPrecise(s.saved)}</span>
+                        {s.target != null && (
+                          <span className="space-target">
+                            <span className="space-bar"><span style={{ width: `${Math.min(100, s.percent || 0)}%` }} /></span>
+                            <small>of {formatGbpPrecise(s.target)}</small>
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                </ul>
+              )}
             </div>
-            <div className="account-row-value">{formatGbpPrecise(acc.value)}</div>
           </li>
         ))}
       </ul>
@@ -77,22 +105,39 @@ function PropertyGroup({ items }) {
           const value = Number(prop.current_value || prop.purchase_price || 0)
           const mortgage = prop.mortgage_outstanding != null ? Number(prop.mortgage_outstanding) : null
           const equity = mortgage != null ? value - mortgage : value
+          const hpi = prop._hpi
+          const hpiActive = prop.value_source === 'hpi' && hpi
           return (
             <li key={prop.id} className="account-row property-row">
               <div className="account-row-main">
-                <span className="account-name">{prop.name}</span>
+                <span className="account-name">
+                  {prop.name}
+                  {hpiActive && (
+                    <span
+                      className={`hpi-badge ${hpi.delta_pct >= 0 ? 'positive' : 'negative'}`}
+                      title={`HPI ${hpi.region} (${hpi.subtype_key}) · ${hpi.bought_at} → ${hpi.as_of}`}
+                    >
+                      HPI {hpi.delta_pct >= 0 ? '+' : ''}{hpi.delta_pct.toFixed(2)}%
+                    </span>
+                  )}
+                </span>
                 <span className="account-provider">
                   {prop.type.replace('_', ' ')} · bought {formatDate(prop.purchase_date)} · paid {formatGbp(prop.purchase_price)}
+                  {hpiActive && (
+                    <> · revalued {hpi.as_of} via Land Registry HPI ({hpi.region})</>
+                  )}
                 </span>
                 {mortgage == null && (
-                  <span className="warn">No mortgage info — set <code>mortgage_outstanding</code> in accounts.json</span>
+                  <span className="warn">Set <code>mortgage_outstanding</code> in accounts.json (currently treated as full equity)</span>
                 )}
               </div>
               <div className="account-row-value">
                 {formatGbpPrecise(equity)}
-                {mortgage != null && (
+                {mortgage != null ? (
                   <small>{formatGbp(value)} − {formatGbp(mortgage)}</small>
-                )}
+                ) : hpiActive ? (
+                  <small>was {formatGbp(prop.purchase_price)}</small>
+                ) : null}
               </div>
             </li>
           )
