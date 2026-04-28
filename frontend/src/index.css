@@ -278,6 +278,7 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 8px;
 }
+.space-balances.single { grid-template-columns: 1fr; }
 .space-balances .info-value { font-size: 1.1em; }
 .space-balances .info-value.positive { color: var(--positive); }
 .space-balances .info-value.negative { color: var(--negative); }

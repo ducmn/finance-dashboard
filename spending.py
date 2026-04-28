@@ -47,10 +47,12 @@ def _all_feed_items(months: int = 12, force: bool = False) -> list[dict[str, Any
         category_uid = acc.get("defaultCategory")
         if not category_uid:
             continue
-        # Window in 30-day chunks to stay friendly with the API.
-        chunk_start = start
-        while chunk_start < end:
-            chunk_end = min(chunk_start + timedelta(days=30), end)
+        # Walk newest -> oldest in 30-day chunks. If a chunk fails (e.g. 429),
+        # back off briefly and continue with the next chunk so a single rate-
+        # limit hit doesn't drop the rest of the history.
+        chunk_end = end
+        while chunk_end > start:
+            chunk_start = max(chunk_end - timedelta(days=30), start)
             try:
                 page = c.get(
                     f"/api/v2/feed/account/{acc['accountUid']}/category/{category_uid}/transactions-between",
@@ -59,13 +61,17 @@ def _all_feed_items(months: int = 12, force: bool = False) -> list[dict[str, Any
                         "maxTransactionTimestamp": _ts(chunk_end),
                     },
                 )
-            except StarlingError:
-                break
+            except StarlingError as err:
+                if "429" in str(err):
+                    time.sleep(2.0)
+                # Move to the next chunk regardless rather than dropping the rest.
+                chunk_end = chunk_start
+                continue
             for raw in page.get("feedItems", []):
                 norm = _normalize(raw)
                 if norm:
                     items.append(norm)
-            chunk_start = chunk_end
+            chunk_end = chunk_start
 
     items.sort(key=lambda x: x["date"])
     _cache.update({"items": items, "fetched_at": time.time(), "months": months})

@@ -81,15 +81,17 @@ function SpaceCard({ space, series }) {
       </div>
 
       <div className="space-card-body">
-        <div className="space-balances">
+        <div className={`space-balances ${showChart ? '' : 'single'}`}>
           <div>
             <div className="info-label">Now</div>
             <div className="info-value">{formatGbpPrecise(space.starting_balance)}</div>
           </div>
-          <div>
-            <div className="info-label">In 12 months</div>
-            <div className={`info-value ${trendClass}`}>{formatGbpPrecise(space.ending_balance)}</div>
-          </div>
+          {showChart && (
+            <div>
+              <div className="info-label">In 12 months</div>
+              <div className={`info-value ${trendClass}`}>{formatGbpPrecise(space.ending_balance)}</div>
+            </div>
+          )}
         </div>
 
         {showChart ? (
