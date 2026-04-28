@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Tooltip, Legend, Filler } from 'chart.js'
-import { Bar, Doughnut } from 'react-chartjs-2'
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
+import { Doughnut } from 'react-chartjs-2'
 import api from '../services/api'
 import { formatGbp, formatGbpPrecise, formatDate } from '../utils/format'
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Tooltip, Legend, Filler)
+ChartJS.register(ArcElement, Tooltip, Legend)
 
 const CATEGORY_PALETTE = [
   '#6366f1', '#10b981', '#f59e0b', '#ef4444', '#3b82f6',
@@ -14,7 +14,6 @@ const CATEGORY_PALETTE = [
 
 export default function SpendingPanel() {
   const [summary, setSummary] = useState(null)
-  const [monthly, setMonthly] = useState([])
   const [categories, setCategories] = useState([])
   const [topExpenses, setTopExpenses] = useState([])
   const [error, setError] = useState(null)
@@ -22,12 +21,11 @@ export default function SpendingPanel() {
   useEffect(() => {
     Promise.all([
       api.getSpendingSummary(),
-      api.getSpendingMonthly(),
       api.getSpendingCategories(12),
       api.getTopSpending(10, 'expense'),
     ])
-      .then(([s, m, c, t]) => {
-        setSummary(s); setMonthly(m); setCategories(c); setTopExpenses(t)
+      .then(([s, c, t]) => {
+        setSummary(s); setCategories(c); setTopExpenses(t)
       })
       .catch(err => setError(err?.message || 'Could not load spending data'))
   }, [])
@@ -66,18 +64,10 @@ export default function SpendingPanel() {
         </div>
       </div>
 
-      <div className="spending-charts">
-        <div className="chart-card">
-          <h3>Monthly cash flow</h3>
-          <div className="chart-wrapper">
-            <Bar data={buildMonthlyData(monthly)} options={barOptions} />
-          </div>
-        </div>
-        <div className="chart-card">
-          <h3>Spending by category (last 12 months)</h3>
-          <div className="chart-wrapper">
-            <Doughnut data={buildCategoryData(categories)} options={doughnutOptions} />
-          </div>
+      <div className="chart-card">
+        <h3>Spending by category (last 12 months)</h3>
+        <div className="chart-wrapper">
+          <Doughnut data={buildCategoryData(categories)} options={doughnutOptions} />
         </div>
       </div>
 
@@ -113,16 +103,6 @@ function Stat({ label, value, positive, negative }) {
   )
 }
 
-function buildMonthlyData(rows) {
-  return {
-    labels: rows.map(r => r.month),
-    datasets: [
-      { label: 'Income', data: rows.map(r => r.income), backgroundColor: '#10b981', borderRadius: 6 },
-      { label: 'Expenses', data: rows.map(r => r.expenses), backgroundColor: '#ef4444', borderRadius: 6 },
-    ],
-  }
-}
-
 function buildCategoryData(rows) {
   const top = rows.slice(0, 10)
   const otherTotal = rows.slice(10).reduce((s, r) => s + r.total, 0)
@@ -137,13 +117,6 @@ function buildCategoryData(rows) {
       borderWidth: 0,
     }],
   }
-}
-
-const barOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: { legend: { position: 'top' } },
-  scales: { y: { ticks: { callback: v => '£' + Number(v).toLocaleString() } } },
 }
 
 const doughnutOptions = {
