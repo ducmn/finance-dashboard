@@ -75,6 +75,11 @@ def get_top_spending(limit: int = 15, kind: str = "expense", months: int = 12):
     return spending.top_transactions(limit=limit, kind=kind, months=months)
 
 
+@app.get("/api/spending/budgets")
+def get_spending_budgets(year: int | None = None, month: int | None = None):
+    return spending.budget_status(year=year, month=month)
+
+
 @app.get("/api/pension/forecast")
 def get_pension_forecast(assumed_return_pct: float = 5.0):
     return pension_forecast(load_accounts(), assumed_return_pct=assumed_return_pct)

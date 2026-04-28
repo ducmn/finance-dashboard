@@ -6,7 +6,7 @@ and exposes simple aggregations. Replaces the old CSV-based parser.
 from __future__ import annotations
 
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 from starling import StarlingClient, StarlingError
@@ -88,8 +88,8 @@ DEFAULT_LARGE_THRESHOLD = 20000.0
 DEFAULT_EXCLUDE_CATEGORIES = {"INVESTMENTS"}
 
 
-def _filter_config() -> dict[str, Any]:
-    """Pull spending filters from cashflow.json with sensible defaults."""
+def _config() -> dict[str, Any]:
+    """Pull spending config from cashflow.json with sensible defaults."""
     try:
         from cashflow import load_cashflow
         data = load_cashflow()
@@ -100,7 +100,28 @@ def _filter_config() -> dict[str, Any]:
         "exclude_amount_above": float(cfg.get("exclude_amount_above", DEFAULT_LARGE_THRESHOLD)),
         "exclude_categories": set(cfg.get("exclude_categories", list(DEFAULT_EXCLUDE_CATEGORIES))),
         "exclude_counterparties": [c.lower() for c in cfg.get("exclude_counterparties", [])],
+        "category_overrides": data.get("category_overrides") or {},
+        "category_budgets": data.get("category_budgets") or {},
     }
+
+
+def _filter_config() -> dict[str, Any]:
+    """Backward-compatible alias used by _normalize."""
+    return _config()
+
+
+def _apply_category_override(party: str, category: str, overrides: dict[str, Any]) -> str:
+    """Reclassify a transaction's category if its counterparty matches an override pattern."""
+    if not party:
+        return category
+    party_lower = party.lower()
+    for new_category, rule in overrides.items():
+        if not isinstance(rule, dict):
+            continue
+        for needle in rule.get("match_counterparties", []) or []:
+            if needle.lower() in party_lower:
+                return new_category
+    return category
 
 
 def _normalize(item: dict[str, Any]) -> dict[str, Any] | None:
@@ -117,22 +138,24 @@ def _normalize(item: dict[str, Any]) -> dict[str, Any] | None:
     if item.get("direction") == "OUT":
         amount = -amount
 
-    cfg = _filter_config()
+    cfg = _config()
     if abs(amount) >= cfg["exclude_amount_above"]:
         return None
-    category = item.get("spendingCategory") or "UNCATEGORISED"
-    if category in cfg["exclude_categories"]:
+    base_category = item.get("spendingCategory") or "UNCATEGORISED"
+    if base_category in cfg["exclude_categories"]:
         return None
-    party_lower = (item.get("counterPartyName") or "").lower()
+    party = item.get("counterPartyName") or ""
+    party_lower = party.lower()
     if any(needle in party_lower for needle in cfg["exclude_counterparties"]):
         return None
 
+    category = _apply_category_override(party, base_category, cfg["category_overrides"])
     txn_time = item.get("transactionTime") or ""
     return {
         "id": item.get("feedItemUid"),
         "date": txn_time[:10],
         "datetime": txn_time,
-        "party": item.get("counterPartyName") or "",
+        "party": party,
         "category": category,
         "reference": item.get("reference") or "",
         "amount": round(amount, 2),
@@ -226,3 +249,65 @@ def top_transactions(limit: int = 15, kind: str = "expense", months: int = 12) -
 def reload() -> dict[str, Any]:
     _all_feed_items(force=True)
     return {"loaded": True, "transactions": len(_cache["items"] or [])}
+
+
+def budget_status(year: int | None = None, month: int | None = None) -> dict[str, Any]:
+    """Per-category budget vs actual for the given calendar month (defaults to current).
+
+    Includes month-to-date actual, days elapsed, expected end-of-month projection,
+    and on/over status. Categories with no budget are skipped.
+    """
+    today = date.today()
+    if year is None:
+        year = today.year
+    if month is None:
+        month = today.month
+
+    cfg = _config()
+    budgets_raw = cfg["category_budgets"]
+    budgets = {k: float(v) for k, v in budgets_raw.items() if isinstance(v, (int, float))}
+    if not budgets:
+        return {"month": f"{year:04d}-{month:02d}", "budgets": []}
+
+    items = [
+        i for i in _all_feed_items(months=3)
+        if i["date"][:7] == f"{year:04d}-{month:02d}" and i["amount"] < 0
+    ]
+
+    spent: dict[str, float] = {cat: 0.0 for cat in budgets}
+    spent_count: dict[str, int] = {cat: 0 for cat in budgets}
+    for it in items:
+        cat = it["category"]
+        if cat in spent:
+            spent[cat] += -it["amount"]
+            spent_count[cat] += 1
+
+    if month == 12:
+        next_month_first = date(year + 1, 1, 1)
+    else:
+        next_month_first = date(year, month + 1, 1)
+    days_in_month = (next_month_first - date(year, month, 1)).days
+    is_current_month = today.year == year and today.month == month
+    days_elapsed = today.day if is_current_month else days_in_month
+
+    out: list[dict[str, Any]] = []
+    for cat, budget in budgets.items():
+        actual = round(spent[cat], 2)
+        pct = round(actual / budget * 100, 1) if budget > 0 else 0
+        projected = round(actual / max(1, days_elapsed) * days_in_month, 2) if is_current_month else actual
+        on_track = projected <= budget * 1.05  # 5% tolerance
+        out.append({
+            "category": cat,
+            "budget": round(budget, 2),
+            "actual": actual,
+            "pct": pct,
+            "transactions": spent_count[cat],
+            "projected": projected,
+            "on_track": on_track,
+            "is_current_month": is_current_month,
+            "days_elapsed": days_elapsed,
+            "days_in_month": days_in_month,
+        })
+
+    out.sort(key=lambda x: -x["actual"])
+    return {"month": f"{year:04d}-{month:02d}", "budgets": out}

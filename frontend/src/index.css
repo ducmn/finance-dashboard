@@ -499,6 +499,69 @@ body {
   margin-bottom: 14px;
 }
 
+/* ---- Budget tracker ---- */
+.budgets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+.budget-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  display: flex; flex-direction: column; gap: 10px;
+  border-left: 4px solid var(--positive);
+}
+.budget-card.projected-over { border-left-color: var(--warning); }
+.budget-card.over { border-left-color: var(--negative); }
+.budget-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.budget-head h3 { font-size: 0.98em; font-weight: 600; }
+.budget-pct {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 1.2em;
+}
+.budget-card.on-track .budget-pct { color: var(--positive); }
+.budget-card.projected-over .budget-pct { color: var(--warning); }
+.budget-card.over .budget-pct { color: var(--negative); }
+.budget-bar {
+  position: relative;
+  height: 8px;
+  background: var(--surface-soft);
+  border-radius: 999px;
+  overflow: hidden;
+  display: flex;
+}
+.budget-bar > span {
+  height: 100%;
+  background: var(--positive);
+  border-radius: 999px 0 0 999px;
+}
+.budget-card.projected-over .budget-bar > span { background: var(--warning); }
+.budget-card.over .budget-bar > span { background: var(--negative); }
+.budget-bar-over {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--negative),
+    var(--negative) 4px,
+    #fca5a5 4px,
+    #fca5a5 8px
+  );
+}
+.budget-amounts {
+  font-variant-numeric: tabular-nums;
+  font-size: 1em;
+}
+.budget-amounts strong { font-size: 1.1em; }
+.budget-amounts span { color: var(--text-muted); }
+.budget-meta {
+  font-size: 0.82em;
+  color: var(--text-muted);
+}
+
 /* ---- Bills breakdown ---- */
 .bills-grid {
   display: grid;

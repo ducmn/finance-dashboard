@@ -6,6 +6,7 @@ import NetWorthHistory from './components/NetWorthHistory'
 import PayDayPlan from './components/PayDayPlan'
 import AccountsList from './components/AccountsList'
 import BillsBreakdown from './components/BillsBreakdown'
+import BudgetTracker from './components/BudgetTracker'
 import BtlTaxPanel from './components/BtlTaxPanel'
 import LifeGoals from './components/LifeGoals'
 import SpendingPanel from './components/SpendingPanel'
@@ -92,6 +93,7 @@ export default function App() {
       <BillsBreakdown />
       <BtlTaxPanel />
       <LifeGoals />
+      <BudgetTracker />
       <SpendingPanel />
       <PensionForecast />
 

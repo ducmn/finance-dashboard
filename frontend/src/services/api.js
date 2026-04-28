@@ -16,6 +16,7 @@ const api = {
     client.get(`/spending/categories?months=${months}`).then(r => r.data),
   getTopSpending: (limit = 10, kind = 'expense') =>
     client.get(`/spending/top?limit=${limit}&kind=${kind}`).then(r => r.data),
+  getSpendingBudgets: () => client.get('/spending/budgets').then(r => r.data),
   getPensionForecast: (assumed = 5) =>
     client.get(`/pension/forecast?assumed_return_pct=${assumed}`).then(r => r.data),
   getSnapshots: () => client.get('/snapshots').then(r => r.data),
