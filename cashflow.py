@@ -230,27 +230,27 @@ def project(
     for sid, info in spaces.items():
         points = series[sid]
         balances_only = [p["balance"] for p in points]
-        min_idx = min(range(len(balances_only)), key=lambda i: balances_only[i])
-        max_idx = max(range(len(balances_only)), key=lambda i: balances_only[i])
+        min_idx, min_val = min(enumerate(balances_only), key=lambda kv: kv[1])
+        max_idx, max_val = max(enumerate(balances_only), key=lambda kv: kv[1])
         end_balance = balances_only[-1] if balances_only else 0.0
         starting = points[0]["balance"] if points else 0.0
-        deficit = balances_only[min_idx] < 0
         space_summaries.append({
             "id": sid,
             "name": info.get("name", sid),
             "starling_uid": info.get("starling_uid"),
+            "external_destination": info.get("external_destination"),
             "starting_balance": round(starting, 2),
             "ending_balance": round(end_balance, 2),
             "min_balance": {
-                "value": round(balances_only[min_idx], 2),
+                "value": round(min_val, 2),
                 "date": points[min_idx]["date"],
                 "event": points[min_idx].get("event"),
             },
             "max_balance": {
-                "value": round(balances_only[max_idx], 2),
+                "value": round(max_val, 2),
                 "date": points[max_idx]["date"],
             },
-            "in_deficit": deficit,
+            "in_deficit": min_val < 0,
             "min_balance_rule": info.get("min_balance_rule"),
             "target": info.get("target"),
             "_note": info.get("_note"),

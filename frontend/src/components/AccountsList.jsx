@@ -56,6 +56,14 @@ function AccountGroup({ type, items }) {
                       </span>
                     )}
                   </span>
+                  {acc.target != null && acc.target > 0 && (
+                    <div className="target-progress">
+                      <div className="target-progress-bar">
+                        <span style={{ width: `${Math.min(100, (acc.value / acc.target) * 100)}%` }} />
+                      </div>
+                      <small>{formatGbp(acc.value)} / {formatGbp(acc.target)} · {((acc.value / acc.target) * 100).toFixed(0)}%</small>
+                    </div>
+                  )}
                 </div>
                 <div className="account-row-value">{formatGbpPrecise(acc.value)}</div>
               </div>
