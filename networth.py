@@ -11,13 +11,52 @@ EXAMPLE_PATH = Path(__file__).parent / "accounts.example.json"
 SNAPSHOTS_DIR = Path(__file__).parent / "snapshots"
 
 
-def load_accounts() -> dict[str, Any]:
-    """Load accounts.json, falling back to accounts.example.json if missing."""
+def load_accounts(apply_live: bool = True) -> dict[str, Any]:
+    """Load accounts.json, falling back to accounts.example.json if missing.
+
+    When apply_live=True, accounts whose `live_source` matches a configured
+    integration get their `value` overridden from the live source.
+    """
     path = ACCOUNTS_PATH if ACCOUNTS_PATH.exists() else EXAMPLE_PATH
     with path.open() as f:
         data = json.load(f)
     data["_source"] = path.name
+    if apply_live:
+        _apply_live_balances(data)
     return data
+
+
+def _apply_live_balances(data: dict[str, Any]) -> None:
+    """Override account values from live integrations where configured."""
+    needs_starling = any(
+        (acc.get("live_source") == "starling")
+        or (isinstance(acc.get("live_source"), dict) and acc["live_source"].get("provider") == "starling")
+        for acc in data.get("accounts", [])
+    )
+    if not needs_starling:
+        return
+    try:
+        from starling import fetch_summary
+    except ImportError:
+        return
+    summary = fetch_summary()
+    if not summary.get("configured") or summary.get("error") or not summary.get("accounts"):
+        return
+    primary = summary["accounts"][0]
+    primary_balance = primary["effective_balance"]
+    for acc in data["accounts"]:
+        ls = acc.get("live_source")
+        is_starling = ls == "starling" or (isinstance(ls, dict) and ls.get("provider") == "starling")
+        if not is_starling:
+            continue
+        acc["_stored_value"] = acc.get("value")
+        acc["value"] = primary_balance
+        acc["_live"] = {
+            "provider": "starling",
+            "balance": primary_balance,
+            "cleared_balance": primary["cleared_balance"],
+            "fetched_at": summary.get("fetched_at"),
+        }
 
 
 def _category_for(account: dict[str, Any]) -> str:

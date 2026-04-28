@@ -3,6 +3,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+load_dotenv()  # noqa: E402  must run before modules read env
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -16,6 +20,7 @@ from networth import (
     save_snapshot,
 )
 from pension_forecast import forecast as pension_forecast
+from starling import StarlingError, fetch_recent_transactions, fetch_summary
 
 app = FastAPI(title="Finance Dashboard", version="2.0.0")
 
@@ -79,6 +84,19 @@ def get_snapshots():
 @app.post("/api/snapshots")
 def post_snapshot():
     return save_snapshot(load_accounts())
+
+
+@app.get("/api/starling/summary")
+def get_starling_summary():
+    return fetch_summary()
+
+
+@app.get("/api/starling/transactions")
+def get_starling_transactions(days: int = 30, limit: int = 50):
+    try:
+        return fetch_recent_transactions(days=days, limit=limit)
+    except StarlingError as e:
+        raise HTTPException(status_code=502, detail=str(e))
 
 
 @app.post("/api/reload")

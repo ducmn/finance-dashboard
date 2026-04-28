@@ -39,8 +39,16 @@ function AccountGroup({ type, items }) {
         {items.map(acc => (
           <li key={acc.id} className="account-row">
             <div className="account-row-main">
-              <span className="account-name">{acc.name}</span>
-              <span className="account-provider">{acc.provider}</span>
+              <span className="account-name">
+                {acc.name}
+                {acc._live && <span className="live-badge" title={`Live from ${acc._live.provider} · fetched ${acc._live.fetched_at}`}>● LIVE</span>}
+              </span>
+              <span className="account-provider">
+                {acc.provider}
+                {acc._live && acc._live.cleared_balance != null && acc._live.cleared_balance !== acc._live.balance && (
+                  <span className="live-meta"> · cleared {formatGbpPrecise(acc._live.cleared_balance)}</span>
+                )}
+              </span>
             </div>
             <div className="account-row-value">{formatGbpPrecise(acc.value)}</div>
           </li>

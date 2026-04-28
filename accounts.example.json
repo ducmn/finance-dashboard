@@ -14,7 +14,8 @@
       "provider": "Example Bank",
       "type": "cash",
       "subtype": "current",
-      "value": 2500.00
+      "value": 2500.00,
+      "_comment_live_source": "Set to \"starling\" to auto-override value from the Starling Personal API (requires STARLING_TOKEN in .env)"
     },
     {
       "id": "savings",
