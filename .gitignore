@@ -1,6 +1,7 @@
 # Personal financial data — NEVER commit
 accounts.json
 cashflow.json
+tax.json
 snapshots/
 .cache/
 *.csv

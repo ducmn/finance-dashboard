@@ -385,6 +385,39 @@ body {
   font-weight: 600;
 }
 
+/* ---- BTL tax ---- */
+.tax-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.tax-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.tax-card .info-value { font-size: 1.6em; font-weight: 700; }
+.tax-card .info-meta { font-size: 0.86em; }
+.tax-card.highlight {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+}
+.tax-card.highlight .info-label,
+.tax-card.highlight .info-meta { color: rgba(255, 255, 255, 0.85); }
+.tax-card.positive { border-left: 4px solid var(--positive); }
+.tax-card.risk { border-left: 4px solid var(--warning); }
+.countdown { color: var(--text-muted); font-size: 0.92em; }
+.tax-card.highlight .countdown { color: rgba(255, 255, 255, 0.7); }
+.tax-hint {
+  font-size: 0.85em;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 6px;
+}
+
 /* ---- Target progress ---- */
 .target-progress { margin-top: 6px; display: flex; flex-direction: column; gap: 3px; }
 .target-progress-bar {

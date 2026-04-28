@@ -137,6 +137,7 @@ All endpoints under `/api`:
 
 - `accounts.json` — your real account/property numbers. **Gitignored.**
 - `cashflow.json` — your real income/expense schedule. **Gitignored.**
+- `tax.json` — your marginal rate + HMRC self-assessment dashboard figures. **Gitignored.**
 - `.env` — your Starling Personal Access Token. **Gitignored.**
 - `snapshots/` — net worth history. Gitignored.
 - `.cache/` — bank holiday + HPI caches. Gitignored.
