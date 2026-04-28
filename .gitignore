@@ -2,6 +2,7 @@
 accounts.json
 cashflow.json
 tax.json
+goals.json
 snapshots/
 .cache/
 *.csv

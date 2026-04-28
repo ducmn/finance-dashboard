@@ -6,6 +6,7 @@ import AccountsList from './components/AccountsList'
 import CashflowPanel from './components/CashflowPanel'
 import BillsBreakdown from './components/BillsBreakdown'
 import BtlTaxPanel from './components/BtlTaxPanel'
+import LifeGoals from './components/LifeGoals'
 import SpendingPanel from './components/SpendingPanel'
 import PensionForecast from './components/PensionForecast'
 
@@ -88,6 +89,7 @@ export default function App() {
       <CashflowPanel />
       <BillsBreakdown />
       <BtlTaxPanel />
+      <LifeGoals />
       <SpendingPanel />
       <PensionForecast />
 

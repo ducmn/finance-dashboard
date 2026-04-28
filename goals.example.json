@@ -1,0 +1,21 @@
+{
+  "_note": "Each goal: target amount + target date + current saved + planned monthly contribution.",
+  "goals": [
+    {
+      "id": "house-deposit",
+      "name": "House deposit",
+      "target_amount": 50000,
+      "target_date": "2027-09-01",
+      "current_amount": 5000,
+      "monthly_contribution": 1500
+    },
+    {
+      "id": "wedding",
+      "name": "Wedding",
+      "target_amount": 25000,
+      "target_date": "2028-06-01",
+      "current_amount": 0,
+      "monthly_contribution": 500
+    }
+  ]
+}

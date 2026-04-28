@@ -23,6 +23,7 @@ from pension_forecast import forecast as pension_forecast
 from starling import StarlingError, fetch_recent_transactions, fetch_summary
 from cashflow import bills_breakdown, generate_events, project_with_live_balances
 from tax import project_btl_tax
+from goals import list_goals
 
 app = FastAPI(title="Finance Dashboard", version="2.0.0")
 
@@ -103,6 +104,11 @@ def get_cashflow_bills():
 @app.get("/api/tax/btl")
 def get_btl_tax():
     return project_btl_tax()
+
+
+@app.get("/api/goals")
+def get_goals():
+    return list_goals()
 
 
 @app.get("/api/starling/summary")

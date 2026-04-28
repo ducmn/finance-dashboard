@@ -26,6 +26,7 @@ const api = {
     client.get(`/cashflow/projection?months=${months}`).then(r => r.data),
   getCashflowBills: () => client.get('/cashflow/bills').then(r => r.data),
   getBtlTax: () => client.get('/tax/btl').then(r => r.data),
+  getGoals: () => client.get('/goals').then(r => r.data),
 }
 
 export default api
