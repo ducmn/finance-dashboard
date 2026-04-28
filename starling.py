@@ -34,7 +34,7 @@ class StarlingClient:
             "User-Agent": "finance-dashboard/2.0",
         }
 
-    def _get(self, path: str, params: dict | None = None) -> dict:
+    def get(self, path: str, params: dict | None = None) -> dict:
         if not self.configured:
             raise StarlingError("STARLING_TOKEN is not set")
         with httpx.Client(timeout=TIMEOUT) as c:
@@ -47,20 +47,20 @@ class StarlingClient:
             return r.json()
 
     def list_accounts(self) -> list[dict]:
-        return self._get("/api/v2/accounts").get("accounts", [])
+        return self.get("/api/v2/accounts").get("accounts", [])
 
     def balance(self, account_uid: str) -> dict:
-        return self._get(f"/api/v2/accounts/{account_uid}/balance")
+        return self.get(f"/api/v2/accounts/{account_uid}/balance")
 
     def list_spaces(self, account_uid: str) -> list[dict]:
         """Return active saving spaces (formerly Saving Goals)."""
-        data = self._get(f"/api/v2/account/{account_uid}/savings-goals")
+        data = self.get(f"/api/v2/account/{account_uid}/savings-goals")
         return [g for g in data.get("savingsGoalList", []) if g.get("state") == "ACTIVE"]
 
     def feed_items_since(self, account_uid: str, category_uid: str, since: datetime) -> list[dict]:
         ts = since.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
         path = f"/api/v2/feed/account/{account_uid}/category/{category_uid}"
-        return self._get(path, params={"changesSince": ts}).get("feedItems", [])
+        return self.get(path, params={"changesSince": ts}).get("feedItems", [])
 
 
 def _to_amount(minor_units: int, currency: str = "GBP") -> float:

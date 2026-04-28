@@ -1,20 +1,25 @@
 # Finance Dashboard
 
-A personal finance dashboard for the UK: tracks **net worth, investments, cash, property, pensions and Starling spending** in one place.
+A personal finance dashboard for the UK: tracks **net worth, investments, property, cash flow, Starling spending, and pension forecast** in one place.
 
 Built with **FastAPI** (Python) + **React** + **Vite** + **Chart.js**.
 
-> **Note on data sources.** Vanguard UK has no public retail API, so investment values are entered manually in `accounts.json`. Starling has a personal API but it's easier to drop your CSV statement in and re-parse it. Moneybox / Scottish Widows: manual.
+> **Data sources.**
+> - **Starling**: live via the Personal API (balances, Spaces, full feed).
+> - **Vanguard / Moneybox / Scottish Widows**: manual entry in `accounts.json` (no public retail API).
+> - **Property valuation**: HM Land Registry UK House Price Index, scaled by region + property type.
+> - **UK State Pension & bank holidays**: HMRC / gov.uk JSON.
 
 ---
 
 ## What it shows
 
-- **Net worth** — total of all accounts + property equity − liabilities, with allocation breakdown.
-- **Accounts** — grouped by Cash / Investments / Pensions, plus a Property panel with purchase price + current value.
-- **Spending** — parses Starling CSV statements: monthly cash flow, top categories, biggest expenses.
-- **Pension forecast** — projects DC pots (e.g. Vanguard SIPP, workplace) to State Pension Age using compound monthly contributions, plus the State Pension forecast.
-- **Snapshots** — save a dated JSON snapshot any time so the hero shows your change since last snapshot.
+- **Net worth** — total of all accounts + property − liabilities, with allocation breakdown.
+- **Accounts** — Cash / Investments / Pensions, plus a Property panel with HPI-revalued figures.
+- **Cash flow** — envelope-style projection over the next 12 months. Per-Space running balance, deficit warnings, recurring income/expense schedule with weekend + UK bank holiday handling.
+- **Spending** — pulls every Starling feed item via the API, aggregated by month and category.
+- **Pension forecast** — projects DC pots (Vanguard SIPP, workplace) to State Pension Age @ 5%/yr (FCA mid-projection), plus the State Pension forecast and 4% safe-withdrawal income.
+- **Snapshots** — save a dated net-worth snapshot any time to track change over time.
 
 ## Quick start
 
@@ -25,81 +30,85 @@ pip install -r requirements.txt
 
 # 2. data — copy the example, fill in your real numbers
 cp accounts.example.json accounts.json
-$EDITOR accounts.json     # accounts.json is gitignored
+cp cashflow.example.json cashflow.json
+$EDITOR accounts.json cashflow.json   # both gitignored
 
-# 3. (optional) drop a Starling CSV statement in the project root
-#    *.csv is gitignored
+# 3. Starling token — generate at developer.starlingbank.com/personal/list,
+#    put in .env (gitignored)
+echo "STARLING_TOKEN=eyJ..." > .env
 
 # 4. run
-python main.py            # http://localhost:8000
+python main.py                        # http://localhost:8000
 
-# 5. frontend (in another terminal)
-cd frontend && npm install && npm run dev   # http://localhost:3000
-```
-
-Or with Docker:
-```bash
-docker-compose up --build
+# 5. frontend (only when developing — production build already in dist/)
+cd frontend && npm install && npm run dev
 ```
 
 ## Daily use
 
-Pick the level of effort that suits you:
-
-**1. One-tap from your dock / dock app (easiest, macOS):**
-
 ```bash
-./bin/install-launchd.sh        # installs a LaunchAgent
+./bin/install-launchd.sh
 ```
 
-The dashboard auto-starts on every login at `http://localhost:8000` and restarts if it crashes. Logs at `/tmp/finance-dashboard.log`. To stop it: `launchctl unload ~/Library/LaunchAgents/com.finance-dashboard.plist`.
+That's it — the dashboard auto-starts on every macOS login at **http://localhost:8000** and is restarted if it crashes. Logs at `/tmp/finance-dashboard.log`. Stop with `launchctl unload ~/Library/LaunchAgents/com.finance-dashboard.plist`.
 
-**2. Install as a desktop / phone app (PWA):**
+**Install as a desktop / phone app (PWA):**
+- Chrome / Edge / Brave: click the install icon in the URL bar.
+- iPhone / iPad: Safari → Share → "Add to Home Screen".
 
-The dashboard ships a web manifest, so any modern browser will offer "Install app":
-- **Chrome / Edge / Brave (macOS)**: open `http://localhost:8000`, click the install icon in the URL bar — you get a standalone window with the £ icon.
-- **iPhone / iPad**: open in Safari, Share → "Add to Home Screen".
-- **Android**: Chrome menu → "Install app".
+**Reach it from your phone off-network:** the easiest path is [Tailscale](https://tailscale.com) (free for personal). Install on Mac + phone, log in on both, then `http://<mac-tailscale-name>:8000` works from anywhere.
 
-**3. Reach it from your phone (off-network):**
+## File schemas
 
-The dashboard binds to `localhost`, so it isn't reachable from your phone by default. The cleanest path is [Tailscale](https://tailscale.com) (free for personal use): install on your Mac and phone, log in on both, then your phone can hit `http://<mac-tailscale-name>:8000` from anywhere.
-
-## `accounts.json` schema
-
-See [`accounts.example.json`](accounts.example.json) for a full example. Key fields:
+### `accounts.json`
+See [`accounts.example.json`](accounts.example.json). Defines accounts, properties, state pension forecast.
 
 ```jsonc
 {
   "currency": "GBP",
-  "owner_display_name": "Your name",
-  "state_pension": {
-    "start_date": "YYYY-MM-DD",
-    "weekly_amount": 0,
-    "monthly_amount": 0,
-    "annual_amount": 0
-  },
+  "state_pension": { "start_date": "YYYY-MM-DD", "weekly_amount": 0, "monthly_amount": 0, "annual_amount": 0 },
   "accounts": [
-    { "id": "...", "name": "...", "provider": "...",
-      "type": "cash | investment | pension",
+    { "id": "...", "type": "cash | investment | pension",
       "subtype": "current | savings | isa | gia | lisa | sipp | workplace_dc",
-      "value": 0.00,
-      // pensions only:
-      "monthly_employer_contribution": 0,
-      "monthly_employee_contribution": 0
+      "value": 0,
+      "live_source": "starling",          // optional — overrides value with live Starling balance
+      "monthly_employer_contribution": 0  // pensions only
     }
   ],
   "properties": [
-    { "id": "...", "name": "...",
-      "type": "residence | buy_to_let",
-      "purchase_date": "YYYY-MM-DD",
-      "purchase_price": 0,
-      "current_value": 0,
+    { "id": "...", "type": "residence | buy_to_let",
+      "purchase_date": "YYYY-MM-DD", "purchase_price": 0, "current_value": 0,
       "value_source": "manual | hpi | purchase",
-      "region": "london",            // HPI region slug
+      "region": "london",                 // HPI region slug
       "property_subtype": "flat | terraced | semi-detached | detached | new-build"
     }
   ]
+}
+```
+
+### `cashflow.json`
+See [`cashflow.example.json`](cashflow.example.json). Defines income, expenses, transfers, and Spaces.
+
+```jsonc
+{
+  "spaces": [
+    { "id": "annual_bills", "name": "Annual Bills",
+      "starling_uid": "...",              // optional, links to a live Starling Space balance
+      "min_balance_rule": "cover_through_december" }
+  ],
+  "income": [
+    { "id": "salary", "amount": 3000, "schedule": "monthly", "day": 25,
+      "weekend_rule": "earlier_working_day | later_working_day | none",
+      "split": [ { "space": "monthly_bills", "amount": 800 } ] }
+  ],
+  "expenses": [
+    { "id": "council-tax", "amount": -200, "schedule": "monthly | annual",
+      "day": 1, "month": 12,               // month required for annual
+      "from_space": "monthly_bills",
+      "actuals": { "2025-12": -2487.10 }   // record actual paid; overrides amount for that period
+    }
+  ],
+  "transfers": []
 }
 ```
 
@@ -110,25 +119,27 @@ All endpoints under `/api`:
 | Method | Path | Notes |
 |---|---|---|
 | GET | `/networth` | Totals + breakdown by category and provider. |
-| GET | `/accounts` | All accounts grouped by type; properties; liabilities. |
-| GET | `/spending/summary` | Income / expenses / net from Starling CSV. |
-| GET | `/spending/monthly` | Per-month cash flow. |
+| GET | `/accounts` | All accounts grouped by type, plus properties. |
+| GET | `/cashflow/events?months=6` | Dated events (income, expenses, transfers). |
+| GET | `/cashflow/projection?months=12` | Per-Space running balance + deficit warnings. |
+| GET | `/spending/summary?months=12` | Income / expenses / net from Starling API. |
+| GET | `/spending/monthly?months=12` | Per-month cash flow. |
 | GET | `/spending/categories?months=12` | Spend by Starling category. |
-| GET | `/spending/top?limit=15&kind=expense` | Top transactions. |
-| GET | `/pension/forecast?assumed_return_pct=5` | DC pot projection to SPA + state pension. |
+| GET | `/spending/top?limit=15&kind=expense&months=12` | Top transactions. |
+| GET | `/pension/forecast` | DC pot projection to SPA + state pension. |
+| GET | `/starling/summary` | Live Starling accounts + Spaces. |
+| GET | `/starling/transactions?days=30` | Recent feed items. |
 | GET | `/snapshots` | All saved net-worth snapshots. |
-| POST | `/snapshots` | Save today's net worth as a dated JSON in `snapshots/` (gitignored). |
-| POST | `/reload` | Re-detect Starling CSV file. |
+| POST | `/snapshots` | Save today's net worth. |
+| POST | `/reload` | Force-refresh the spending cache. |
 
 ## Files & secrets
 
-- **`accounts.json`** — your real numbers. **Gitignored.**
-- **`accounts.example.json`** — schema example with fake numbers. Committed.
-- **`StarlingStatement_*.csv`** — Starling export. `*.csv` is gitignored.
-- **`snapshots/`** — net worth history. Gitignored.
-- **`financial plan.xlsx`** — your spreadsheet. `*.xlsx` is gitignored.
-
-If you ever want to use the [Starling Personal Access Token API](https://developer.starlingbank.com/personal/list) instead of CSV exports, put the token in `.env` (gitignored) and add a fetcher; right now the dashboard only uses CSV.
+- `accounts.json` — your real account/property numbers. **Gitignored.**
+- `cashflow.json` — your real income/expense schedule. **Gitignored.**
+- `.env` — your Starling Personal Access Token. **Gitignored.**
+- `snapshots/` — net worth history. Gitignored.
+- `.cache/` — bank holiday + HPI caches. Gitignored.
 
 ## License
 

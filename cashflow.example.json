@@ -1,0 +1,33 @@
+{
+  "currency": "GBP",
+  "_note": "Edit `amount` to update a recurring figure permanently. Use `actuals` (e.g. \"2025-06\": -1960.83) to record what was actually paid in a specific month — the projection picks the actual over the planned amount when present.",
+
+  "spaces": [
+    { "id": "monthly_bills", "name": "Monthly Bills" },
+    { "id": "annual_bills", "name": "Annual Bills", "min_balance_rule": "cover_through_december" },
+    { "id": "discretionary", "name": "Discretionary" }
+  ],
+
+  "income": [
+    {
+      "id": "salary",
+      "name": "Salary",
+      "amount": 3000.00,
+      "schedule": "monthly",
+      "day": 25,
+      "weekend_rule": "earlier_working_day",
+      "split": [
+        { "space": "monthly_bills", "amount": 800 },
+        { "space": "annual_bills", "amount": 200 },
+        { "space": "discretionary", "amount": 2000 }
+      ]
+    }
+  ],
+
+  "expenses": [
+    { "id": "council-tax", "name": "Council tax", "amount": -200, "schedule": "monthly", "day": 1, "from_space": "monthly_bills" },
+    { "id": "service-charge-q4", "name": "Annual service charge", "amount": -2500, "schedule": "annual", "month": 12, "day": 1, "from_space": "annual_bills", "actuals": { "2024-12": -2487.10 } }
+  ],
+
+  "transfers": []
+}

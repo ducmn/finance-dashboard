@@ -229,6 +229,90 @@ body {
 }
 .hpi-badge.positive { background: #d1fae5; color: #065f46; }
 .hpi-badge.negative { background: #fee2e2; color: #991b1b; }
+
+/* ---- Cashflow ---- */
+.cashflow-risks {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.risk-card {
+  background: #fff7ed;
+  border-left: 4px solid var(--warning);
+  border-radius: 10px;
+  padding: 14px 18px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  box-shadow: var(--shadow-sm);
+}
+.risk-card .risk-icon { font-size: 1.4em; }
+.risk-suggestion { color: var(--text-muted); font-size: 0.9em; margin-top: 4px; }
+
+.cashflow-spaces {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.space-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.space-card.risk { border-left: 4px solid var(--warning); }
+.space-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.space-card-head h3 { font-size: 0.98em; font-weight: 600; flex: 1; }
+.space-card-body { display: flex; flex-direction: column; gap: 12px; }
+.space-balances {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.space-balances .info-value { font-size: 1.1em; }
+.space-balances .info-value.positive { color: var(--positive); }
+.space-balances .info-value.negative { color: var(--negative); }
+
+.sparkline {
+  width: 100%;
+  height: 50px;
+  display: block;
+}
+.sparkline path { stroke: var(--accent); }
+.space-card.risk .sparkline path { stroke: var(--warning); }
+
+.space-min, .space-target-row, .space-note {
+  font-size: 0.85em;
+  color: var(--text-muted);
+  display: flex;
+  gap: 6px;
+}
+.space-min .info-label { font-size: 1em; }
+.space-note { font-style: italic; }
+
+.tag-income { background: #d1fae5; color: #047857; }
+.tag-expense { background: #fee2e2; color: #b91c1c; }
+.tag-transfer { background: #e0e7ff; color: #4338ca; }
+.actual-tag {
+  color: var(--positive);
+  font-size: 1.1em;
+  vertical-align: middle;
+}
+.cashflow-hint {
+  margin-top: 14px;
+  font-size: 0.85em;
+  color: var(--text-muted);
+  text-align: center;
+}
 @keyframes pulse-dot {
   0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
   50% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }

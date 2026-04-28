@@ -20,6 +20,10 @@ const api = {
     client.get(`/pension/forecast?assumed_return_pct=${assumed}`).then(r => r.data),
   getSnapshots: () => client.get('/snapshots').then(r => r.data),
   saveSnapshot: () => client.post('/snapshots').then(r => r.data),
+  getCashflowEvents: (months = 6) =>
+    client.get(`/cashflow/events?months=${months}`).then(r => r.data),
+  getCashflowProjection: (months = 12) =>
+    client.get(`/cashflow/projection?months=${months}`).then(r => r.data),
 }
 
 export default api

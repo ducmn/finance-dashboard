@@ -11,7 +11,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from data_processor import StarlingStatement, find_csv_file
+import spending
 from networth import (
     compute_networth,
     grouped_accounts,
@@ -21,6 +21,7 @@ from networth import (
 )
 from pension_forecast import forecast as pension_forecast
 from starling import StarlingError, fetch_recent_transactions, fetch_summary
+from cashflow import generate_events, project_with_live_balances
 
 app = FastAPI(title="Finance Dashboard", version="2.0.0")
 
@@ -31,9 +32,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-statement = StarlingStatement(find_csv_file())
-
 
 @app.get("/api/networth")
 def get_networth():
@@ -50,25 +48,25 @@ def get_accounts():
 
 
 @app.get("/api/spending/summary")
-def get_spending_summary():
-    return statement.summary()
+def get_spending_summary(months: int = 12):
+    return spending.summary(months=months)
 
 
 @app.get("/api/spending/monthly")
-def get_spending_monthly():
-    return statement.monthly()
+def get_spending_monthly(months: int = 12):
+    return spending.monthly(months=months)
 
 
 @app.get("/api/spending/categories")
 def get_spending_categories(months: int = 12):
-    return statement.by_category(months=months)
+    return spending.by_category(months=months)
 
 
 @app.get("/api/spending/top")
-def get_top_spending(limit: int = 15, kind: str = "expense"):
+def get_top_spending(limit: int = 15, kind: str = "expense", months: int = 12):
     if kind not in ("expense", "income"):
         raise HTTPException(status_code=400, detail="kind must be 'expense' or 'income'")
-    return statement.top_transactions(limit=limit, kind=kind)
+    return spending.top_transactions(limit=limit, kind=kind, months=months)
 
 
 @app.get("/api/pension/forecast")
@@ -86,6 +84,16 @@ def post_snapshot():
     return save_snapshot(load_accounts())
 
 
+@app.get("/api/cashflow/events")
+def get_cashflow_events(months: int = 6):
+    return generate_events(months=months)
+
+
+@app.get("/api/cashflow/projection")
+def get_cashflow_projection(months: int = 12):
+    return project_with_live_balances(months=months)
+
+
 @app.get("/api/starling/summary")
 def get_starling_summary():
     return fetch_summary()
@@ -100,10 +108,8 @@ def get_starling_transactions(days: int = 30, limit: int = 50):
 
 
 @app.post("/api/reload")
-def reload_csv():
-    csv = find_csv_file()
-    statement.load(csv) if csv else None
-    return {"loaded": statement.loaded, "file": csv}
+def reload_data():
+    return spending.reload()
 
 
 @app.get("/health")
