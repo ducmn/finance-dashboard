@@ -5,14 +5,40 @@ and exposes simple aggregations. Replaces the old CSV-based parser.
 """
 from __future__ import annotations
 
+import json
 import time
 from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any
 
 from starling import StarlingClient, StarlingError
 
 CACHE_TTL_SECONDS = 600
-_cache: dict[str, Any] = {"items": None, "fetched_at": 0, "months": 0}
+_cache: dict[str, Any] = {"items": None, "fetched_at": 0, "months": 0, "from_disk": False}
+
+DISK_CACHE_DIR = Path(__file__).parent / ".cache"
+FEED_CACHE_PATH = DISK_CACHE_DIR / "starling-feed.json"
+
+
+def _load_disk_cache() -> dict[str, Any] | None:
+    if not FEED_CACHE_PATH.exists():
+        return None
+    try:
+        with FEED_CACHE_PATH.open() as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def _save_disk_cache(items: list[dict[str, Any]], months: int) -> None:
+    try:
+        DISK_CACHE_DIR.mkdir(exist_ok=True)
+        tmp = FEED_CACHE_PATH.with_suffix(".json.tmp")
+        with tmp.open("w") as f:
+            json.dump({"items": items, "fetched_at": time.time(), "months": months}, f)
+        tmp.replace(FEED_CACHE_PATH)
+    except OSError:
+        pass
 
 
 def _client() -> StarlingClient | None:
@@ -74,10 +100,23 @@ def _all_feed_items(months: int = 12, force: bool = False) -> list[dict[str, Any
             chunk_end = chunk_start
 
     items.sort(key=lambda x: x["date"])
-    # Don't lock in an empty result — if every chunk hit a rate limit, leave
-    # the cache untouched so the next call retries instead of returning 0.
     if items:
-        _cache.update({"items": items, "fetched_at": time.time(), "months": months})
+        # Fresh fetch succeeded — update both in-memory and disk caches.
+        _cache.update({"items": items, "fetched_at": time.time(), "months": months, "from_disk": False})
+        _save_disk_cache(items, months)
+        return items
+
+    # Fetch returned nothing (every chunk likely 429'd). Fall back to disk
+    # if available so the dashboard shows the last good state instead of zeros.
+    disk = _load_disk_cache()
+    if disk and disk.get("items"):
+        _cache.update({
+            "items": disk["items"],
+            "fetched_at": float(disk.get("fetched_at", 0)),
+            "months": int(disk.get("months", months)),
+            "from_disk": True,
+        })
+        return disk["items"]
     return items
 
 
@@ -179,9 +218,13 @@ def summary(months: int = 12) -> dict[str, Any]:
             "net": 0.0,
             "first_date": None,
             "last_date": None,
+            "stale": False,
+            "fetched_at": None,
         }
     income = sum(i["amount"] for i in items if i["amount"] > 0)
     expenses = -sum(i["amount"] for i in items if i["amount"] < 0)
+    fetched_at = float(_cache.get("fetched_at") or 0)
+    age_seconds = time.time() - fetched_at if fetched_at else None
     return {
         "loaded": True,
         "configured": True,
@@ -191,6 +234,12 @@ def summary(months: int = 12) -> dict[str, Any]:
         "net": round(income - expenses, 2),
         "first_date": items[0]["date"],
         "last_date": items[-1]["date"],
+        "stale": bool(_cache.get("from_disk")),
+        "fetched_at": (
+            datetime.fromtimestamp(fetched_at, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            if fetched_at else None
+        ),
+        "age_hours": round(age_seconds / 3600, 1) if age_seconds is not None else None,
     }
 
 

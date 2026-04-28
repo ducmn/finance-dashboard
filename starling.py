@@ -5,15 +5,41 @@ Docs: https://developer.starlingbank.com/personal/docs
 """
 from __future__ import annotations
 
+import json
 import os
 import time
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any
 
 import httpx
 
 API_BASE = "https://api.starlingbank.com"
 TIMEOUT = 10.0
+
+DISK_CACHE_DIR = Path(__file__).parent / ".cache"
+SUMMARY_CACHE_PATH = DISK_CACHE_DIR / "starling-summary.json"
+
+
+def _load_summary_disk() -> dict[str, Any] | None:
+    if not SUMMARY_CACHE_PATH.exists():
+        return None
+    try:
+        with SUMMARY_CACHE_PATH.open() as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def _save_summary_disk(value: dict[str, Any]) -> None:
+    try:
+        DISK_CACHE_DIR.mkdir(exist_ok=True)
+        tmp = SUMMARY_CACHE_PATH.with_suffix(".json.tmp")
+        with tmp.open("w") as f:
+            json.dump(value, f)
+        tmp.replace(SUMMARY_CACHE_PATH)
+    except OSError:
+        pass
 
 
 class StarlingError(RuntimeError):
@@ -75,8 +101,9 @@ SUMMARY_TTL_SECONDS = 30
 
 
 def fetch_summary(force: bool = False) -> dict[str, Any]:
-    """Return Starling accounts with live balances. 30-second cache so multiple
-    endpoints in one page load share a single API hit. Empty when unconfigured."""
+    """Return Starling accounts with live balances. 30-second in-memory cache,
+    plus disk fallback so a rate-limit hit during a fresh fetch returns the
+    last-known state instead of zeros."""
     if (
         not force
         and _summary_cache["value"] is not None
@@ -91,9 +118,17 @@ def fetch_summary(force: bool = False) -> dict[str, Any]:
     try:
         accounts = client.list_accounts()
     except StarlingError as e:
-        # On rate limit, prefer stale cache to a fresh empty response
+        # In-memory cache first, then disk
         if _summary_cache["value"] is not None:
-            return _summary_cache["value"]
+            stale = dict(_summary_cache["value"])
+            stale["stale"] = True
+            return stale
+        disk = _load_summary_disk()
+        if disk:
+            disk["stale"] = True
+            _summary_cache["value"] = disk
+            _summary_cache["fetched_at"] = float(disk.get("_disk_saved_at", 0))
+            return disk
         return {"configured": True, "error": str(e), "accounts": [], "total_balance": 0.0}
 
     items = []
@@ -140,14 +175,19 @@ def fetch_summary(force: bool = False) -> dict[str, Any]:
             "spaces": spaces,
         })
 
+    now = time.time()
     result = {
         "configured": True,
         "fetched_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "accounts": items,
         "total_balance": round(total, 2),
+        "stale": False,
+        "_disk_saved_at": now,
     }
     _summary_cache["value"] = result
-    _summary_cache["fetched_at"] = time.time()
+    _summary_cache["fetched_at"] = now
+    if items:
+        _save_summary_disk(result)
     return result
 
 

@@ -34,11 +34,22 @@ export default function SpendingPanel() {
   if (!summary) return null
 
   if (!summary.loaded) {
+    if (!summary.configured) {
+      return (
+        <section className="spending">
+          <h2 className="section-title">Spending</h2>
+          <div className="info-card">
+            Starling not configured. Set <code>STARLING_TOKEN</code> in <code>.env</code> and restart the dashboard.
+          </div>
+        </section>
+      )
+    }
     return (
       <section className="spending">
         <h2 className="section-title">Spending</h2>
         <div className="info-card">
-          Starling not configured or no transactions in window. Set <code>STARLING_TOKEN</code> in <code>.env</code> and restart the dashboard.
+          ⏳ Starling is rate-limited or temporarily unreachable, and there's no on-disk fallback yet.
+          The dashboard will auto-retry the next time you load this panel — usually fine in a minute or two.
         </div>
       </section>
     )
@@ -49,7 +60,14 @@ export default function SpendingPanel() {
   return (
     <section className="spending">
       <h2 className="section-title">
-        Spending <small>{formatDate(summary.first_date)} → {formatDate(summary.last_date)} · noise filtered</small>
+        Spending <small>
+          {formatDate(summary.first_date)} → {formatDate(summary.last_date)} · noise filtered
+          {summary.stale && (
+            <span className="stale-tag" title={`Last successful fetch ${summary.age_hours}h ago`}>
+              {' · '}stale ({summary.age_hours}h old)
+            </span>
+          )}
+        </small>
       </h2>
 
       <div className="spending-summary">
