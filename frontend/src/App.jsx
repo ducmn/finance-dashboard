@@ -4,7 +4,6 @@ import NetWorthHero from './components/NetWorthHero'
 import NetWorthHistory from './components/NetWorthHistory'
 import PayDayPlan from './components/PayDayPlan'
 import AccountsList from './components/AccountsList'
-import CashflowPanel from './components/CashflowPanel'
 import BillsBreakdown from './components/BillsBreakdown'
 import BtlTaxPanel from './components/BtlTaxPanel'
 import LifeGoals from './components/LifeGoals'
@@ -88,7 +87,6 @@ export default function App() {
       <NetWorthHistory />
       <PayDayPlan />
       <AccountsList accounts={accounts} />
-      <CashflowPanel />
       <BillsBreakdown />
       <BtlTaxPanel />
       <LifeGoals />

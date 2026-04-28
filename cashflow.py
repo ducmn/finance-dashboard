@@ -323,7 +323,12 @@ def project(
 
 
 def bills_breakdown() -> dict[str, Any]:
-    """Group cashflow expenses by their source Space, with monthly equivalents."""
+    """Group cashflow expenses by their source Space, with monthly equivalents.
+
+    Per-item amounts are rounded for display, but totals sum the unrounded
+    values then round once at the end so they match other code that does
+    the same (avoids the classic 'sum of displayed items' rounding glitch).
+    """
     data = load_cashflow()
     groups: dict[str, dict[str, Any]] = {}
     for ex in data.get("expenses", []):
@@ -332,11 +337,11 @@ def bills_breakdown() -> dict[str, Any]:
             continue
         amount = abs(float(ex.get("amount", 0)))
         schedule = ex.get("schedule", "monthly")
-        annual = amount * 12 if schedule == "monthly" else amount
-        monthly_eq = amount if schedule == "monthly" else round(amount / 12, 2)
+        annual_raw = amount * 12 if schedule == "monthly" else amount
+        monthly_raw = amount if schedule == "monthly" else amount / 12
         bucket = groups.setdefault(
             src,
-            {"space": src, "items": [], "monthly_total": 0.0, "annual_total": 0.0},
+            {"space": src, "items": [], "_monthly_raw": 0.0, "_annual_raw": 0.0},
         )
         bucket["items"].append({
             "id": ex["id"],
@@ -344,17 +349,17 @@ def bills_breakdown() -> dict[str, Any]:
             "amount": -amount,
             "schedule": schedule,
             "month": ex.get("month") if schedule == "annual" else None,
-            "monthly_equivalent": monthly_eq,
-            "annual_equivalent": annual,
+            "monthly_equivalent": round(monthly_raw, 2),
+            "annual_equivalent": round(annual_raw, 2),
             "btl_deductible": bool(ex.get("btl_deductible")),
         })
-        bucket["monthly_total"] += monthly_eq
-        bucket["annual_total"] += annual
+        bucket["_monthly_raw"] += monthly_raw
+        bucket["_annual_raw"] += annual_raw
 
     out = []
-    for sid, bucket in groups.items():
-        bucket["monthly_total"] = round(bucket["monthly_total"], 2)
-        bucket["annual_total"] = round(bucket["annual_total"], 2)
+    for bucket in groups.values():
+        bucket["monthly_total"] = round(bucket.pop("_monthly_raw"), 2)
+        bucket["annual_total"] = round(bucket.pop("_annual_raw"), 2)
         bucket["items"].sort(key=lambda x: -x["annual_equivalent"])
         out.append(bucket)
     out.sort(key=lambda x: -x["annual_total"])
