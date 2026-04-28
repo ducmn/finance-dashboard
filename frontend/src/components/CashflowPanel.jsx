@@ -12,6 +12,15 @@ export default function CashflowPanel() {
       .catch(err => setError(err?.message || 'Could not load cashflow projection'))
   }, [])
 
+  const risks = useMemo(
+    () => (projection ? projection.spaces.filter(s => s.in_deficit) : []),
+    [projection],
+  )
+  const upcoming = useMemo(
+    () => (projection ? projection.events.slice(0, 30) : []),
+    [projection],
+  )
+
   if (error) {
     return (
       <section className="cashflow">
@@ -21,9 +30,6 @@ export default function CashflowPanel() {
     )
   }
   if (!projection) return null
-
-  const risks = projection.spaces.filter(s => s.in_deficit)
-  const upcoming = useMemo(() => projection.events.slice(0, 30), [projection])
 
   return (
     <section className="cashflow">

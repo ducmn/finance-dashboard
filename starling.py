@@ -6,6 +6,7 @@ Docs: https://developer.starlingbank.com/personal/docs
 from __future__ import annotations
 
 import os
+import time
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -43,6 +44,8 @@ class StarlingClient:
                 raise StarlingError("Starling rejected the token (401). Regenerate it.")
             if r.status_code == 403:
                 raise StarlingError("Token lacks required scopes (403).")
+            if r.status_code == 429:
+                raise StarlingError("Starling rate limit hit (429). Backing off.")
             r.raise_for_status()
             return r.json()
 
@@ -63,12 +66,24 @@ class StarlingClient:
         return self.get(path, params={"changesSince": ts}).get("feedItems", [])
 
 
-def _to_amount(minor_units: int, currency: str = "GBP") -> float:
+def _to_amount(minor_units: int) -> float:
     return round(minor_units / 100, 2)
 
 
-def fetch_summary() -> dict[str, Any]:
-    """Return Starling accounts with live balances. Empty when unconfigured."""
+_summary_cache: dict[str, Any] = {"fetched_at": 0.0, "value": None}
+SUMMARY_TTL_SECONDS = 30
+
+
+def fetch_summary(force: bool = False) -> dict[str, Any]:
+    """Return Starling accounts with live balances. 30-second cache so multiple
+    endpoints in one page load share a single API hit. Empty when unconfigured."""
+    if (
+        not force
+        and _summary_cache["value"] is not None
+        and time.time() - _summary_cache["fetched_at"] < SUMMARY_TTL_SECONDS
+    ):
+        return _summary_cache["value"]
+
     client = StarlingClient()
     if not client.configured:
         return {"configured": False, "accounts": [], "total_balance": 0.0}
@@ -76,6 +91,9 @@ def fetch_summary() -> dict[str, Any]:
     try:
         accounts = client.list_accounts()
     except StarlingError as e:
+        # On rate limit, prefer stale cache to a fresh empty response
+        if _summary_cache["value"] is not None:
+            return _summary_cache["value"]
         return {"configured": True, "error": str(e), "accounts": [], "total_balance": 0.0}
 
     items = []
@@ -122,12 +140,15 @@ def fetch_summary() -> dict[str, Any]:
             "spaces": spaces,
         })
 
-    return {
+    result = {
         "configured": True,
         "fetched_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "accounts": items,
         "total_balance": round(total, 2),
     }
+    _summary_cache["value"] = result
+    _summary_cache["fetched_at"] = time.time()
+    return result
 
 
 def fetch_recent_transactions(days: int = 30, limit: int = 50) -> dict[str, Any]:
