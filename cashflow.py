@@ -171,7 +171,14 @@ def generate_events(start: date | None = None, months: int = 12) -> list[dict[st
     for transfer in data.get("transfers", []):
         events.extend(_expand_event(transfer, "transfer", start, end, holidays))
 
-    events.sort(key=lambda e: (e["date"], -abs(e["amount"])))
+    direction_order = {"income": 0, "transfer": 1, "expense": 2}
+    events.sort(
+        key=lambda e: (
+            e["date"],
+            direction_order.get(e["direction"], 9),
+            -abs(e["amount"]),
+        )
+    )
     return events
 
 
