@@ -29,6 +29,7 @@ const api = {
   getBtlTax: () => client.get('/tax/btl').then(r => r.data),
   getGoals: () => client.get('/goals').then(r => r.data),
   getPaydaySuggestions: () => client.get('/payday/suggestions').then(r => r.data),
+  getSweepPlan: () => client.get('/sweep').then(r => r.data),
 }
 
 export default api

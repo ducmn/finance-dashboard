@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Optional
 
 from dotenv import load_dotenv
 
@@ -26,6 +27,7 @@ from cashflow import bills_breakdown, generate_events, project_with_live_balance
 from tax import project_btl_tax
 from goals import list_goals
 from suggestions import compute_suggestions
+from sweep import compute_sweep_plan
 
 app = FastAPI(title="Finance Dashboard", version="2.0.0")
 
@@ -76,7 +78,7 @@ def get_top_spending(limit: int = 15, kind: str = "expense", months: int = 12):
 
 
 @app.get("/api/spending/budgets")
-def get_spending_budgets(year: int | None = None, month: int | None = None):
+def get_spending_budgets(year: Optional[int] = None, month: Optional[int] = None):
     return spending.budget_status(year=year, month=month)
 
 
@@ -123,6 +125,11 @@ def get_goals():
 @app.get("/api/payday/suggestions")
 def get_payday_suggestions():
     return compute_suggestions()
+
+
+@app.get("/api/sweep")
+def get_sweep_plan():
+    return compute_sweep_plan()
 
 
 @app.get("/api/starling/summary")

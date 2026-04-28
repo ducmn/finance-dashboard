@@ -4,6 +4,7 @@ import HealthBanner from './components/HealthBanner'
 import NetWorthHero from './components/NetWorthHero'
 import NetWorthHistory from './components/NetWorthHistory'
 import PayDayPlan from './components/PayDayPlan'
+import SweepWaterfall from './components/SweepWaterfall'
 import AccountsList from './components/AccountsList'
 import BillsBreakdown from './components/BillsBreakdown'
 import BudgetTracker from './components/BudgetTracker'
@@ -89,6 +90,7 @@ export default function App() {
       <NetWorthHero networth={networth} snapshots={snapshots} />
       <NetWorthHistory />
       <PayDayPlan />
+      <SweepWaterfall />
       <AccountsList accounts={accounts} />
       <BillsBreakdown />
       <BtlTaxPanel />

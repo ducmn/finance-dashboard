@@ -63,7 +63,7 @@ def _all_feed_items(months: int = 12, force: bool = False) -> list[dict[str, Any
                 )
             except StarlingError as err:
                 if "429" in str(err):
-                    time.sleep(2.0)
+                    time.sleep(10.0)
                 # Move to the next chunk regardless rather than dropping the rest.
                 chunk_end = chunk_start
                 continue
@@ -74,7 +74,10 @@ def _all_feed_items(months: int = 12, force: bool = False) -> list[dict[str, Any
             chunk_end = chunk_start
 
     items.sort(key=lambda x: x["date"])
-    _cache.update({"items": items, "fetched_at": time.time(), "months": months})
+    # Don't lock in an empty result — if every chunk hit a rate limit, leave
+    # the cache untouched so the next call retries instead of returning 0.
+    if items:
+        _cache.update({"items": items, "fetched_at": time.time(), "months": months})
     return items
 
 
