@@ -1,0 +1,86 @@
+{
+  "currency": "GBP",
+  "owner_display_name": "Example User",
+  "state_pension": {
+    "start_date": "2065-01-01",
+    "weekly_amount": 230.00,
+    "monthly_amount": 1000.00,
+    "annual_amount": 11960.00
+  },
+  "accounts": [
+    {
+      "id": "current-account",
+      "name": "Main Current Account",
+      "provider": "Example Bank",
+      "type": "cash",
+      "subtype": "current",
+      "value": 2500.00
+    },
+    {
+      "id": "savings",
+      "name": "Easy-access Savings",
+      "provider": "Example Bank",
+      "type": "cash",
+      "subtype": "savings",
+      "value": 8000.00,
+      "interest_rate_pct": 4.5
+    },
+    {
+      "id": "isa-example",
+      "name": "Stocks & Shares ISA",
+      "provider": "Example Broker",
+      "type": "investment",
+      "subtype": "isa",
+      "value": 50000.00,
+      "holdings": [
+        { "name": "Global Index Fund", "value": 50000.00 }
+      ]
+    },
+    {
+      "id": "gia-example",
+      "name": "General Investment Account",
+      "provider": "Example Broker",
+      "type": "investment",
+      "subtype": "gia",
+      "value": 5000.00
+    },
+    {
+      "id": "lisa-example",
+      "name": "Lifetime ISA",
+      "provider": "Example LISA Provider",
+      "type": "investment",
+      "subtype": "lisa",
+      "value": 6000.00
+    },
+    {
+      "id": "sipp-example",
+      "name": "Self-invested Personal Pension",
+      "provider": "Example Broker",
+      "type": "pension",
+      "subtype": "sipp",
+      "value": 10000.00
+    },
+    {
+      "id": "workplace-pension",
+      "name": "Workplace Pension",
+      "provider": "Example Pension Co",
+      "type": "pension",
+      "subtype": "workplace_dc",
+      "value": 12000.00,
+      "monthly_employer_contribution": 200.00,
+      "monthly_employee_contribution": 100.00
+    }
+  ],
+  "properties": [
+    {
+      "id": "home",
+      "name": "Primary Residence",
+      "type": "residence",
+      "purchase_date": "2024-01-01",
+      "purchase_price": 300000,
+      "current_value": 310000,
+      "mortgage_outstanding": null
+    }
+  ],
+  "liabilities": []
+}
