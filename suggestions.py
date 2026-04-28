@@ -83,47 +83,14 @@ def compute_suggestions() -> dict[str, Any]:
     except Exception:
         pass
 
-    # 3. Monthly Bills allocation vs actual bills
-    try:
-        bills = bills_breakdown()
-        cashflow = load_cashflow()
-        monthly_total = next(
-            (g["monthly_total"] for g in bills.get("groups", []) if g["space"] == "monthly_bills"),
-            0.0,
-        )
-        salary_split = next(
-            (inc.get("split") or [] for inc in cashflow.get("income", []) if inc.get("id") == "salary"),
-            [],
-        )
-        mb_alloc = next(
-            (float(s.get("amount", 0)) for s in salary_split if s.get("space") == "monthly_bills"),
-            0.0,
-        )
-        delta = round(monthly_total - mb_alloc, 2)
-        if abs(delta) > THRESHOLD_GBP:
-            direction = "Bump" if delta > 0 else "Trim"
-            suggestions.append({
-                "kind": "adjust_split",
-                "severity": "low" if delta < 0 else "medium",
-                "title": f"{direction} Monthly Bills allocation by £{abs(delta):,.2f}/mo",
-                "reason": (
-                    f"Sum of monthly bills is £{monthly_total:,.2f}/mo but the salary split "
-                    f"sends £{mb_alloc:,.2f}/mo to the space."
-                ),
-                "action": f"Edit the salary split in cashflow.json to allocate £{monthly_total:,.2f} "
-                          "to monthly_bills.",
-                "amount": delta,
-                "space": "monthly_bills",
-            })
-    except Exception:
-        pass
-
-    # 4. Goals: off-track and under-funded
+    # Goals: off-track and under-funded
     try:
         goals = list_goals()
         for goal in goals.get("goals", []):
             if goal.get("track") is False:
                 continue
+            if goal.get("funding_strategy") == "discretionary_surplus":
+                continue  # Pull-from-surplus goals show as a pay-day reminder, not a suggestion
             if goal.get("on_track") or goal.get("required_monthly") is None:
                 continue
             shortfall = goal.get("shortfall_per_month", 0)

@@ -26,7 +26,54 @@ def load_cashflow() -> dict[str, Any]:
     with path.open() as f:
         data = json.load(f)
     data["_source"] = path.name
+    _resolve_auto_splits(data)
     return data
+
+
+def _compute_space_outflows(data: dict[str, Any]) -> dict[str, float]:
+    """Per-space monthly-equivalent outflow total (annuals normalised to /12)."""
+    out: dict[str, float] = {}
+    for ex in data.get("expenses", []):
+        space = ex.get("from_space")
+        if not space:
+            continue
+        amt = abs(float(ex.get("amount", 0)))
+        sched = ex.get("schedule", "monthly")
+        if sched == "monthly":
+            out[space] = out.get(space, 0) + amt
+        elif sched == "annual":
+            out[space] = out.get(space, 0) + amt / 12
+    return {space: round(value, 2) for space, value in out.items()}
+
+
+def _resolve_auto_splits(data: dict[str, Any]) -> None:
+    """Replace `auto` directives in income splits with computed amounts.
+
+    Supported directives:
+      - "cover_outflows": amount = monthly-equivalent outflows from the named space
+      - "remainder": amount = income − sum of all non-remainder splits
+    """
+    outflows = _compute_space_outflows(data)
+    for income in data.get("income", []):
+        income_amount = float(income.get("amount", 0))
+        if income.get("schedule") == "annual":
+            income_amount /= 12
+
+        splits = income.get("split") or []
+        for split in splits:
+            auto = split.get("auto")
+            if auto == "cover_outflows":
+                split["amount"] = round(outflows.get(split.get("space"), 0.0), 2)
+                split["_resolved_from"] = "cover_outflows"
+
+        fixed_total = round(
+            sum(float(s.get("amount", 0)) for s in splits if s.get("auto") != "remainder"),
+            2,
+        )
+        for split in splits:
+            if split.get("auto") == "remainder":
+                split["amount"] = round(income_amount - fixed_total, 2)
+                split["_resolved_from"] = "remainder"
 
 
 def _fetch_uk_bank_holidays() -> set[date]:
@@ -129,6 +176,14 @@ def _expand_event(
             target = _adjust_for_weekend(_safe_day_of_month(year, month, day), weekend_rule, holidays)
             if start <= target <= end:
                 out.append(_make_event(item, target, _amount_for_period(item, _ym(target)), direction))
+    elif schedule == "weekly":
+        weekday = int(item.get("weekday", 0))  # 0 = Monday
+        cursor = start + timedelta(days=(weekday - start.weekday()) % 7)
+        while cursor <= end:
+            target = _adjust_for_weekend(cursor, weekend_rule, holidays) if weekend_rule != "none" else cursor
+            if start <= target <= end:
+                out.append(_make_event(item, target, _amount_for_period(item, _ym(target)), direction))
+            cursor = cursor + timedelta(days=7)
     return out
 
 

@@ -76,6 +76,7 @@ def list_goals() -> dict[str, Any]:
             "current_amount": round(current, 2),
             "monthly_contribution": contribution,
             "funding_account": g.get("funding_account"),
+            "funding_strategy": g.get("funding_strategy"),
             "live_balance": live is not None,
             "gap": round(gap, 2),
             "months_left": months_left,

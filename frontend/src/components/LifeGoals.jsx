@@ -58,7 +58,12 @@ function GoalCard({ goal }) {
       </div>
 
       <div className="goal-status">
-        {goal.required_monthly == null ? (
+        {goal.funding_strategy === 'discretionary_surplus' ? (
+          <span className="reminder">
+            ◎ Funded from <strong>Discretionary surplus on pay day</strong> — top up whenever the
+            space has spare cash.
+          </span>
+        ) : goal.required_monthly == null ? (
           <span className="muted">Set a target date to compute required savings.</span>
         ) : goal.on_track ? (
           <span className="ok">

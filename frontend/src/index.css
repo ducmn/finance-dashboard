@@ -595,6 +595,7 @@ body {
 .goal-status .ok { color: var(--positive); }
 .goal-status .warn { color: #b45309; }
 .goal-status .muted { color: var(--text-muted); font-style: italic; }
+.goal-status .reminder { color: var(--accent); font-weight: 500; }
 .goal-note {
   font-size: 0.8em; color: var(--text-muted); font-style: italic;
   border-top: 1px dashed var(--border); padding-top: 8px;
