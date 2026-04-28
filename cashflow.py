@@ -267,6 +267,45 @@ def project(
     }
 
 
+def bills_breakdown() -> dict[str, Any]:
+    """Group cashflow expenses by their source Space, with monthly equivalents."""
+    data = load_cashflow()
+    groups: dict[str, dict[str, Any]] = {}
+    for ex in data.get("expenses", []):
+        src = ex.get("from_space")
+        if not src:
+            continue
+        amount = abs(float(ex.get("amount", 0)))
+        schedule = ex.get("schedule", "monthly")
+        annual = amount * 12 if schedule == "monthly" else amount
+        monthly_eq = amount if schedule == "monthly" else round(amount / 12, 2)
+        bucket = groups.setdefault(
+            src,
+            {"space": src, "items": [], "monthly_total": 0.0, "annual_total": 0.0},
+        )
+        bucket["items"].append({
+            "id": ex["id"],
+            "name": ex.get("name", ex["id"]),
+            "amount": -amount,
+            "schedule": schedule,
+            "month": ex.get("month") if schedule == "annual" else None,
+            "monthly_equivalent": monthly_eq,
+            "annual_equivalent": annual,
+            "btl_deductible": bool(ex.get("btl_deductible")),
+        })
+        bucket["monthly_total"] += monthly_eq
+        bucket["annual_total"] += annual
+
+    out = []
+    for sid, bucket in groups.items():
+        bucket["monthly_total"] = round(bucket["monthly_total"], 2)
+        bucket["annual_total"] = round(bucket["annual_total"], 2)
+        bucket["items"].sort(key=lambda x: -x["annual_equivalent"])
+        out.append(bucket)
+    out.sort(key=lambda x: -x["annual_total"])
+    return {"groups": out}
+
+
 def project_with_live_balances(months: int = 12) -> dict[str, Any]:
     """Project starting from current Starling Space balances."""
     starting: dict[str, float] = {}

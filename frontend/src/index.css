@@ -385,6 +385,71 @@ body {
   font-weight: 600;
 }
 
+/* ---- Bills breakdown ---- */
+.bills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 14px;
+}
+.bills-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+}
+.bills-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 10px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.bills-head h3 { font-size: 1em; font-weight: 600; }
+.bills-totals { text-align: right; font-variant-numeric: tabular-nums; }
+.bills-totals strong { font-size: 1.05em; }
+.bills-totals small { display: block; color: var(--text-muted); font-size: 0.78em; margin-top: 2px; }
+.bills-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.bills-list li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+  font-size: 0.9em;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.bills-list li:last-child { border-bottom: none; }
+.bills-item-name { color: var(--text); }
+.bills-item-when {
+  background: var(--surface-soft);
+  color: var(--text-muted);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.78em;
+  font-weight: 600;
+}
+.bills-item-amount { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+.bills-item-amount small { display: block; color: var(--text-muted); font-size: 0.78em; font-weight: 400; }
+
+/* ---- Compact pension ---- */
+.pension.compact .pension-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+.pension-cell {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  box-shadow: var(--shadow-sm);
+}
+.pension-cell.highlight {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+}
+.pension-cell.highlight .info-label { color: rgba(255, 255, 255, 0.85); }
+.pension-cell.positive { border-left: 4px solid var(--positive); }
+.pension-cell .info-value { font-size: 1.4em; font-weight: 700; margin-top: 4px; }
+.pension-cell .info-meta { font-size: 0.78em; color: var(--text-muted); margin-top: 3px; }
+
 /* ---- BTL tax ---- */
 .tax-grid {
   display: grid;

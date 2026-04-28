@@ -24,6 +24,7 @@ const api = {
     client.get(`/cashflow/events?months=${months}`).then(r => r.data),
   getCashflowProjection: (months = 12) =>
     client.get(`/cashflow/projection?months=${months}`).then(r => r.data),
+  getCashflowBills: () => client.get('/cashflow/bills').then(r => r.data),
   getBtlTax: () => client.get('/tax/btl').then(r => r.data),
 }
 
