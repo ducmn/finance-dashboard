@@ -10,7 +10,6 @@ export default function NetWorthHero({ networth, snapshots }) {
   if (!networth) return null
 
   const change = computeChange(networth, snapshots)
-  const totals = networth.totals
 
   return (
     <section className="hero">
@@ -25,13 +24,7 @@ export default function NetWorthHero({ networth, snapshots }) {
         )}
       </div>
 
-      <div className="hero-breakdown">
-        <BreakdownRow label="Investments + Cash" value={totals.accounts} color={PALETTE[0]} total={networth.net_worth} />
-        <BreakdownRow label="Property" value={totals.property} color={PALETTE[1]} total={networth.net_worth} />
-      </div>
-
       <div className="hero-allocation">
-        <h3>Allocation</h3>
         <AllocationBar items={networth.by_category} />
         <ul className="allocation-legend">
           {networth.by_category.map((item, i) => (
@@ -47,20 +40,6 @@ export default function NetWorthHero({ networth, snapshots }) {
         </ul>
       </div>
     </section>
-  )
-}
-
-function BreakdownRow({ label, value, color, total }) {
-  const pct = total ? Math.abs(value / total) * 100 : 0
-  return (
-    <div className="breakdown-row">
-      <div className="breakdown-row-head">
-        <span className="dot" style={{ background: color }} />
-        <span>{label}</span>
-        <strong>{formatGbp(value)}</strong>
-      </div>
-      <div className="bar"><span style={{ width: `${pct}%`, background: color }} /></div>
-    </div>
   )
 }
 

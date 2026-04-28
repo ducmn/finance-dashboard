@@ -6,6 +6,7 @@ const STORAGE_KEY = 'finance-dashboard:payday-checks'
 
 export default function PayDayPlan() {
   const [projection, setProjection] = useState(null)
+  const [suggestions, setSuggestions] = useState([])
   const [checked, setChecked] = useState(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') }
     catch { return {} }
@@ -13,6 +14,7 @@ export default function PayDayPlan() {
 
   useEffect(() => {
     api.getCashflowProjection(3).then(setProjection).catch(() => setProjection(null))
+    api.getPaydaySuggestions().then(r => setSuggestions(r.suggestions || [])).catch(() => setSuggestions([]))
   }, [])
 
   const spaceMap = useMemo(
@@ -52,6 +54,25 @@ export default function PayDayPlan() {
   return (
     <section className="payday">
       <h2 className="section-title">Pay day plan</h2>
+
+      {suggestions.length > 0 && (
+        <div className="suggestions">
+          <h3 className="suggestions-title">Smart suggestions <small>{suggestions.length}</small></h3>
+          <ul className="suggestions-list">
+            {suggestions.map((s, i) => (
+              <li key={i} className={`suggestion ${s.severity}`}>
+                <div className="suggestion-icon">{iconFor(s.kind)}</div>
+                <div className="suggestion-body">
+                  <div className="suggestion-title">{s.title}</div>
+                  <div className="suggestion-reason">{s.reason}</div>
+                  <div className="suggestion-action">→ {s.action}</div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="payday-grid">
         {upcomingIncomes.map(ev => {
           const eventKey = `${ev.id}:${ev.date}`
@@ -105,6 +126,13 @@ export default function PayDayPlan() {
       <p className="cashflow-hint">Ticks persist in your browser. Hit ↺ to reset a card after the next pay day rolls in.</p>
     </section>
   )
+}
+
+function iconFor(kind) {
+  if (kind === 'topup') return '+'
+  if (kind === 'adjust_split') return '⇄'
+  if (kind === 'fund_goal') return '◎'
+  return '•'
 }
 
 function describeDestination(space, fallbackId) {

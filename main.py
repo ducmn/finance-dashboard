@@ -25,6 +25,7 @@ from starling import StarlingError, fetch_recent_transactions, fetch_summary
 from cashflow import bills_breakdown, generate_events, project_with_live_balances
 from tax import project_btl_tax
 from goals import list_goals
+from suggestions import compute_suggestions
 
 app = FastAPI(title="Finance Dashboard", version="2.0.0")
 
@@ -112,6 +113,11 @@ def get_btl_tax():
 @app.get("/api/goals")
 def get_goals():
     return list_goals()
+
+
+@app.get("/api/payday/suggestions")
+def get_payday_suggestions():
+    return compute_suggestions()
 
 
 @app.get("/api/starling/summary")
