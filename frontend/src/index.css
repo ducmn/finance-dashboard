@@ -299,19 +299,14 @@ body {
 .space-min .info-label { font-size: 1em; }
 .space-note { font-style: italic; }
 
-.tag-income { background: #d1fae5; color: #047857; }
-.tag-expense { background: #fee2e2; color: #b91c1c; }
-.tag-transfer { background: #e0e7ff; color: #4338ca; }
-.actual-tag {
-  color: var(--positive);
-  font-size: 1.1em;
-  vertical-align: middle;
-}
-.cashflow-hint {
-  margin-top: 14px;
-  font-size: 0.85em;
+.space-cycle {
+  background: var(--surface-soft);
   color: var(--text-muted);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.85em;
   text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ---- Pay day plan ---- */

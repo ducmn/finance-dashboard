@@ -16,10 +16,6 @@ export default function CashflowPanel() {
     () => (projection ? projection.spaces.filter(s => s.in_deficit) : []),
     [projection],
   )
-  const upcoming = useMemo(
-    () => (projection ? projection.events.slice(0, 30) : []),
-    [projection],
-  )
 
   if (error) {
     return (
@@ -61,41 +57,6 @@ export default function CashflowPanel() {
           <SpaceCard key={s.id} space={s} series={projection.series[s.id] || []} />
         ))}
       </div>
-
-      <div className="chart-card">
-        <h3>Upcoming events <small>(next ~6 months)</small></h3>
-        <table className="txn-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Event</th>
-              <th>Direction</th>
-              <th className="right">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {upcoming.map((ev, i) => (
-              <tr key={`${ev.id}-${ev.date}-${i}`}>
-                <td>{formatDate(ev.date)}{ev.is_actual && <span className="actual-tag" title="Recorded actual"> ●</span>}</td>
-                <td>{ev.name}</td>
-                <td>
-                  <span className={`tag ${directionClass(ev.direction)}`}>
-                    {ev.direction}
-                  </span>
-                </td>
-                <td className={`right ${ev.amount >= 0 ? 'amount-positive' : 'amount-negative'}`}>
-                  {formatGbpPrecise(ev.amount)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <p className="cashflow-hint">
-        Edit <code>cashflow.json</code> to update recurring amounts. Use the per-event{' '}
-        <code>actuals: {`{"YYYY-MM": amount}`}</code> map to record what was actually paid in a given month.
-      </p>
     </section>
   )
 }
@@ -104,6 +65,14 @@ function SpaceCard({ space, series }) {
   const path = useMemo(() => sparkPath(series), [series])
   const trend = space.ending_balance - space.starting_balance
   const trendClass = trend >= 0 ? 'positive' : 'negative'
+
+  const amplitude = Math.abs(space.max_balance.value - space.min_balance.value)
+  const drift = Math.abs(trend)
+  // Hide the sparkline when the projection just oscillates around the
+  // starting balance with no meaningful drift (e.g. Monthly Bills, Charity).
+  const isCyclical = amplitude > 1 && drift / amplitude < 0.1
+  const showChart = !isCyclical
+
   return (
     <div className={`space-card ${space.in_deficit ? 'risk' : ''}`}>
       <div className="space-card-head">
@@ -123,16 +92,24 @@ function SpaceCard({ space, series }) {
           </div>
         </div>
 
-        <svg viewBox="0 0 200 50" className="sparkline" preserveAspectRatio="none">
-          <path d={path} fill="none" strokeWidth="1.5" />
-        </svg>
+        {showChart ? (
+          <svg viewBox="0 0 200 50" className="sparkline" preserveAspectRatio="none">
+            <path d={path} fill="none" strokeWidth="1.5" />
+          </svg>
+        ) : (
+          <div className="space-cycle">
+            cycles between {formatGbp(space.min_balance.value)} and {formatGbp(space.max_balance.value)} · no drift
+          </div>
+        )}
 
-        <div className="space-min">
-          <span className="info-label">Lowest</span>
-          <span className={space.in_deficit ? 'amount-negative' : ''}>
-            {formatGbpPrecise(space.min_balance.value)} on {formatDate(space.min_balance.date)}
-          </span>
-        </div>
+        {showChart && (
+          <div className="space-min">
+            <span className="info-label">Lowest</span>
+            <span className={space.in_deficit ? 'amount-negative' : ''}>
+              {formatGbpPrecise(space.min_balance.value)} on {formatDate(space.min_balance.date)}
+            </span>
+          </div>
+        )}
 
         {space.target != null && (
           <div className="space-target-row">
@@ -164,8 +141,3 @@ function sparkPath(series) {
     .join(' ')
 }
 
-function directionClass(dir) {
-  if (dir === 'income') return 'tag-income'
-  if (dir === 'expense') return 'tag-expense'
-  return 'tag-transfer'
-}
