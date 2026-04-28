@@ -122,6 +122,8 @@ def compute_suggestions() -> dict[str, Any]:
     try:
         goals = list_goals()
         for goal in goals.get("goals", []):
+            if goal.get("track") is False:
+                continue
             if goal.get("on_track") or goal.get("required_monthly") is None:
                 continue
             shortfall = goal.get("shortfall_per_month", 0)

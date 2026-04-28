@@ -63,6 +63,11 @@ def list_goals() -> dict[str, Any]:
         progress_pct = round((current / target) * 100, 1) if target > 0 else 0
         on_track = required is None or contribution >= required
 
+        # Reference mode: show cost target + note, skip progress/on-track logic.
+        track = g.get("track")
+        if track is None:
+            track = current > 0 or contribution > 0 or target_date is not None
+
         out.append({
             "id": g["id"],
             "name": g.get("name", g["id"]),
@@ -80,6 +85,7 @@ def list_goals() -> dict[str, Any]:
             ),
             "progress_pct": progress_pct,
             "on_track": on_track,
+            "track": track,
             "note": g.get("_note"),
         })
     return {

@@ -553,6 +553,17 @@ body {
 }
 .goal-card.on-track { border-left-color: var(--positive); }
 .goal-card.off-track { border-left-color: var(--warning); }
+.goal-card.reference { border-left-color: var(--text-soft); opacity: 0.95; }
+.ref-tag {
+  background: var(--surface-soft);
+  color: var(--text-muted);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7em;
+  font-weight: 600;
+  text-transform: lowercase;
+  letter-spacing: 0.04em;
+}
 .goal-head { display: flex; align-items: center; gap: 8px; }
 .goal-head h3 { font-size: 1.05em; font-weight: 600; flex: 1; }
 .goal-target {

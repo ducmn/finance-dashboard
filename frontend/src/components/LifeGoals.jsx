@@ -24,6 +24,8 @@ export default function LifeGoals() {
 }
 
 function GoalCard({ goal }) {
+  if (goal.track === false) return <ReferenceCard goal={goal} />
+
   const pct = Math.min(100, Math.max(0, goal.progress_pct))
   const status = goal.on_track ? 'on-track' : 'off-track'
   const monthsLabel = goal.months_left == null
@@ -72,6 +74,21 @@ function GoalCard({ goal }) {
         )}
       </div>
 
+      {goal.note && <div className="goal-note">{goal.note}</div>}
+    </div>
+  )
+}
+
+function ReferenceCard({ goal }) {
+  return (
+    <div className="goal-card reference">
+      <div className="goal-head">
+        <h3>{goal.name}</h3>
+        <span className="ref-tag">reference cost</span>
+      </div>
+      <div className="goal-target">
+        <span>{formatGbp(goal.target_amount)}</span>
+      </div>
       {goal.note && <div className="goal-note">{goal.note}</div>}
     </div>
   )
