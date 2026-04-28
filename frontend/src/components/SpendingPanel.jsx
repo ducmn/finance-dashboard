@@ -40,23 +40,30 @@ export default function SpendingPanel() {
       <section className="spending">
         <h2 className="section-title">Spending</h2>
         <div className="info-card">
-          No Starling CSV statement found. Drop a <code>StarlingStatement_*.csv</code> file in the project root and call <code>POST /api/reload</code>.
+          Starling not configured or no transactions in window. Set <code>STARLING_TOKEN</code> in <code>.env</code> and restart the dashboard.
         </div>
       </section>
     )
   }
 
+  const savingsRate = summary.income > 0 ? (summary.net / summary.income) * 100 : 0
+
   return (
     <section className="spending">
       <h2 className="section-title">
-        Spending <small>{formatDate(summary.first_date)} → {formatDate(summary.last_date)}</small>
+        Spending <small>{formatDate(summary.first_date)} → {formatDate(summary.last_date)} · noise filtered</small>
       </h2>
 
       <div className="spending-summary">
         <Stat label="Income" value={summary.income} positive />
         <Stat label="Expenses" value={summary.expenses} negative />
         <Stat label="Net" value={summary.net} positive={summary.net >= 0} negative={summary.net < 0} />
-        {summary.current_balance != null && <Stat label="Latest Balance" value={summary.current_balance} />}
+        <div className="stat-card">
+          <div className="stat-label">Savings rate</div>
+          <div className={`stat-value ${savingsRate >= 0 ? 'positive' : 'negative'}`}>
+            {savingsRate.toFixed(1)}%
+          </div>
+        </div>
       </div>
 
       <div className="spending-charts">

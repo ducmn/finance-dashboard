@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 
 import spending
 from networth import (
+    auto_snapshot_if_missing,
     compute_networth,
     grouped_accounts,
     load_accounts,
@@ -37,7 +38,9 @@ app.add_middleware(
 
 @app.get("/api/networth")
 def get_networth():
-    return compute_networth(load_accounts())
+    data = load_accounts()
+    auto_snapshot_if_missing(data)
+    return compute_networth(data)
 
 
 @app.get("/api/accounts")

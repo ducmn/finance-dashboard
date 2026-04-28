@@ -182,6 +182,16 @@ def save_snapshot(data: dict[str, Any]) -> dict[str, Any]:
     return snapshot
 
 
+def auto_snapshot_if_missing(data: dict[str, Any]) -> bool:
+    """Save today's snapshot if one doesn't already exist. Returns True when written."""
+    today = date.today().isoformat()
+    path = SNAPSHOTS_DIR / f"{today}.json"
+    if path.exists():
+        return False
+    save_snapshot(data)
+    return True
+
+
 def load_snapshots() -> list[dict[str, Any]]:
     if not SNAPSHOTS_DIR.exists():
         return []

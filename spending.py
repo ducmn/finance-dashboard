@@ -84,6 +84,23 @@ def _ts(dt: datetime) -> str:
 
 INTERNAL_SOURCES = {"INTERNAL_TRANSFER"}
 INTERNAL_COUNTERPARTY_TYPES = {"CATEGORY"}  # space-to-space movements
+DEFAULT_LARGE_THRESHOLD = 20000.0
+DEFAULT_EXCLUDE_CATEGORIES = {"INVESTMENTS"}
+
+
+def _filter_config() -> dict[str, Any]:
+    """Pull spending filters from cashflow.json with sensible defaults."""
+    try:
+        from cashflow import load_cashflow
+        data = load_cashflow()
+    except Exception:
+        data = {}
+    cfg = data.get("spending_filters") or {}
+    return {
+        "exclude_amount_above": float(cfg.get("exclude_amount_above", DEFAULT_LARGE_THRESHOLD)),
+        "exclude_categories": set(cfg.get("exclude_categories", list(DEFAULT_EXCLUDE_CATEGORIES))),
+        "exclude_counterparties": [c.lower() for c in cfg.get("exclude_counterparties", [])],
+    }
 
 
 def _normalize(item: dict[str, Any]) -> dict[str, Any] | None:
@@ -99,13 +116,24 @@ def _normalize(item: dict[str, Any]) -> dict[str, Any] | None:
     amount = minor / 100
     if item.get("direction") == "OUT":
         amount = -amount
+
+    cfg = _filter_config()
+    if abs(amount) >= cfg["exclude_amount_above"]:
+        return None
+    category = item.get("spendingCategory") or "UNCATEGORISED"
+    if category in cfg["exclude_categories"]:
+        return None
+    party_lower = (item.get("counterPartyName") or "").lower()
+    if any(needle in party_lower for needle in cfg["exclude_counterparties"]):
+        return None
+
     txn_time = item.get("transactionTime") or ""
     return {
         "id": item.get("feedItemUid"),
         "date": txn_time[:10],
         "datetime": txn_time,
         "party": item.get("counterPartyName") or "",
-        "category": item.get("spendingCategory") or "UNCATEGORISED",
+        "category": category,
         "reference": item.get("reference") or "",
         "amount": round(amount, 2),
         "status": item.get("status"),

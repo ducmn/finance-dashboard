@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import api from './services/api'
 import NetWorthHero from './components/NetWorthHero'
+import NetWorthHistory from './components/NetWorthHistory'
 import PayDayPlan from './components/PayDayPlan'
 import AccountsList from './components/AccountsList'
 import CashflowPanel from './components/CashflowPanel'
@@ -84,6 +85,7 @@ export default function App() {
       )}
 
       <NetWorthHero networth={networth} snapshots={snapshots} />
+      <NetWorthHistory />
       <PayDayPlan />
       <AccountsList accounts={accounts} />
       <CashflowPanel />

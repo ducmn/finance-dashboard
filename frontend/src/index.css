@@ -385,6 +385,14 @@ body {
   font-weight: 600;
 }
 
+/* ---- Net worth history ---- */
+.networth-history-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
 /* ---- Bills breakdown ---- */
 .bills-grid {
   display: grid;
