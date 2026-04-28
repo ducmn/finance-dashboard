@@ -105,19 +105,10 @@ def _category_for(account: dict[str, Any]) -> str:
     return "Other"
 
 
-def _property_equity(prop: dict[str, Any]) -> float:
-    value = float(prop.get("current_value") or prop.get("purchase_price") or 0)
-    mortgage = prop.get("mortgage_outstanding")
-    if mortgage is None:
-        return value
-    return value - float(mortgage)
-
-
 def compute_networth(data: dict[str, Any]) -> dict[str, Any]:
     """Compute net worth + breakdowns from accounts data."""
     accounts = data.get("accounts", [])
     properties = data.get("properties", [])
-    liabilities = data.get("liabilities", [])
 
     by_category: dict[str, float] = {}
     by_provider: dict[str, float] = {}
@@ -131,23 +122,13 @@ def compute_networth(data: dict[str, Any]) -> dict[str, Any]:
         provider = acc.get("provider", "Unknown")
         by_provider[provider] = by_provider.get(provider, 0) + value
 
-    property_total = 0.0
-    property_gross = 0.0
-    property_mortgage = 0.0
-    for prop in properties:
-        gross = float(prop.get("current_value") or prop.get("purchase_price") or 0)
-        property_gross += gross
-        mortgage = prop.get("mortgage_outstanding")
-        if mortgage is not None:
-            property_mortgage += float(mortgage)
-        property_total += _property_equity(prop)
-
+    property_total = sum(
+        float(p.get("current_value") or p.get("purchase_price") or 0) for p in properties
+    )
     if property_total > 0:
         by_category["Property"] = property_total
 
-    liability_total = sum(float(l.get("value") or 0) for l in liabilities)
-
-    net_worth = accounts_total + property_total - liability_total
+    net_worth = accounts_total + property_total
 
     return {
         "currency": data.get("currency", "GBP"),
@@ -156,10 +137,7 @@ def compute_networth(data: dict[str, Any]) -> dict[str, Any]:
         "net_worth": round(net_worth, 2),
         "totals": {
             "accounts": round(accounts_total, 2),
-            "property_equity": round(property_total, 2),
-            "property_gross": round(property_gross, 2),
-            "property_mortgage": round(property_mortgage, 2),
-            "liabilities": round(liability_total, 2),
+            "property": round(property_total, 2),
         },
         "by_category": [
             {"category": k, "value": round(v, 2)}
@@ -184,7 +162,6 @@ def grouped_accounts(data: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
         "investment": groups.get("investment", []),
         "pension": groups.get("pension", []),
         "properties": data.get("properties", []),
-        "liabilities": data.get("liabilities", []),
     }
 
 

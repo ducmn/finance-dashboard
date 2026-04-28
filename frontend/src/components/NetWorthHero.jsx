@@ -27,10 +27,7 @@ export default function NetWorthHero({ networth, snapshots }) {
 
       <div className="hero-breakdown">
         <BreakdownRow label="Investments + Cash" value={totals.accounts} color={PALETTE[0]} total={networth.net_worth} />
-        <BreakdownRow label="Property Equity" value={totals.property_equity} color={PALETTE[1]} total={networth.net_worth} />
-        {totals.liabilities > 0 && (
-          <BreakdownRow label="Liabilities" value={-totals.liabilities} color={PALETTE[3]} total={networth.net_worth} />
-        )}
+        <BreakdownRow label="Property" value={totals.property} color={PALETTE[1]} total={networth.net_worth} />
       </div>
 
       <div className="hero-allocation">

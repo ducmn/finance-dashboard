@@ -42,6 +42,29 @@ Or with Docker:
 docker-compose up --build
 ```
 
+## Daily use
+
+Pick the level of effort that suits you:
+
+**1. One-tap from your dock / dock app (easiest, macOS):**
+
+```bash
+./bin/install-launchd.sh        # installs a LaunchAgent
+```
+
+The dashboard auto-starts on every login at `http://localhost:8000` and restarts if it crashes. Logs at `/tmp/finance-dashboard.log`. To stop it: `launchctl unload ~/Library/LaunchAgents/com.finance-dashboard.plist`.
+
+**2. Install as a desktop / phone app (PWA):**
+
+The dashboard ships a web manifest, so any modern browser will offer "Install app":
+- **Chrome / Edge / Brave (macOS)**: open `http://localhost:8000`, click the install icon in the URL bar — you get a standalone window with the £ icon.
+- **iPhone / iPad**: open in Safari, Share → "Add to Home Screen".
+- **Android**: Chrome menu → "Install app".
+
+**3. Reach it from your phone (off-network):**
+
+The dashboard binds to `localhost`, so it isn't reachable from your phone by default. The cleanest path is [Tailscale](https://tailscale.com) (free for personal use): install on your Mac and phone, log in on both, then your phone can hit `http://<mac-tailscale-name>:8000` from anywhere.
+
 ## `accounts.json` schema
 
 See [`accounts.example.json`](accounts.example.json) for a full example. Key fields:
@@ -72,10 +95,11 @@ See [`accounts.example.json`](accounts.example.json) for a full example. Key fie
       "purchase_date": "YYYY-MM-DD",
       "purchase_price": 0,
       "current_value": 0,
-      "mortgage_outstanding": null   // null = unknown; treats full value as equity
+      "value_source": "manual | hpi | purchase",
+      "region": "london",            // HPI region slug
+      "property_subtype": "flat | terraced | semi-detached | detached | new-build"
     }
-  ],
-  "liabilities": []
+  ]
 }
 ```
 

@@ -88,11 +88,10 @@ function AccountGroup({ type, items }) {
 
 function PropertyGroup({ items }) {
   if (!items || items.length === 0) return null
-  const total = items.reduce((s, p) => {
-    const v = Number(p.current_value || p.purchase_price || 0)
-    const m = Number(p.mortgage_outstanding || 0)
-    return s + (v - m)
-  }, 0)
+  const total = items.reduce(
+    (s, p) => s + Number(p.current_value || p.purchase_price || 0),
+    0,
+  )
   return (
     <div className="account-group">
       <div className="account-group-head">
@@ -103,8 +102,6 @@ function PropertyGroup({ items }) {
       <ul>
         {items.map(prop => {
           const value = Number(prop.current_value || prop.purchase_price || 0)
-          const mortgage = prop.mortgage_outstanding != null ? Number(prop.mortgage_outstanding) : null
-          const equity = mortgage != null ? value - mortgage : value
           const hpi = prop._hpi
           const hpiActive = prop.value_source === 'hpi' && hpi
           return (
@@ -127,17 +124,10 @@ function PropertyGroup({ items }) {
                     <> · revalued {hpi.as_of} via Land Registry HPI ({hpi.region})</>
                   )}
                 </span>
-                {mortgage == null && (
-                  <span className="warn">Set <code>mortgage_outstanding</code> in accounts.json (currently treated as full equity)</span>
-                )}
               </div>
               <div className="account-row-value">
-                {formatGbpPrecise(equity)}
-                {mortgage != null ? (
-                  <small>{formatGbp(value)} − {formatGbp(mortgage)}</small>
-                ) : hpiActive ? (
-                  <small>was {formatGbp(prop.purchase_price)}</small>
-                ) : null}
+                {formatGbpPrecise(value)}
+                {hpiActive && <small>was {formatGbp(prop.purchase_price)}</small>}
               </div>
             </li>
           )

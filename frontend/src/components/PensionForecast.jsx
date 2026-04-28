@@ -4,11 +4,10 @@ import { formatGbp, formatGbpPrecise } from '../utils/format'
 
 export default function PensionForecast() {
   const [data, setData] = useState(null)
-  const [returnPct, setReturnPct] = useState(5)
 
   useEffect(() => {
-    api.getPensionForecast(returnPct).then(setData).catch(() => setData(null))
-  }, [returnPct])
+    api.getPensionForecast().then(setData).catch(() => setData(null))
+  }, [])
 
   if (!data) return null
 
@@ -17,7 +16,9 @@ export default function PensionForecast() {
 
   return (
     <section className="pension">
-      <h2 className="section-title">Pension Forecast</h2>
+      <h2 className="section-title">
+        Pension Forecast <small>@ {data.assumed_return_pct}% / yr (FCA mid-projection rate)</small>
+      </h2>
 
       <div className="pension-grid">
         <div className="info-card big">
@@ -37,23 +38,7 @@ export default function PensionForecast() {
         <div className="info-card highlight">
           <div className="info-label">Projected DC pots at SPA</div>
           <div className="info-value">{formatGbp(dc.projected_total_at_spa)}</div>
-          <div className="info-meta">@ {data.assumed_return_pct}% / year</div>
         </div>
-      </div>
-
-      <div className="pension-controls">
-        <label>
-          Assumed annual return:
-          <input
-            type="range"
-            min="0"
-            max="10"
-            step="0.5"
-            value={returnPct}
-            onChange={e => setReturnPct(parseFloat(e.target.value))}
-          />
-          <span>{returnPct.toFixed(1)}%</span>
-        </label>
       </div>
 
       <div className="chart-card">
