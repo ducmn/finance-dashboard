@@ -183,12 +183,28 @@ def save_snapshot(data: dict[str, Any]) -> dict[str, Any]:
 
 
 def auto_snapshot_if_missing(data: dict[str, Any]) -> bool:
-    """Save today's snapshot if one doesn't already exist. Returns True when written."""
+    """Save today's snapshot if one doesn't already exist AND live data is fresh.
+
+    Returns True when written. Skips when any account marked `live_source: starling`
+    is showing its static fallback value rather than a live override — otherwise
+    a snapshot taken during a rate-limit window freezes a stale balance into
+    history.
+    """
     today = date.today().isoformat()
     path = SNAPSHOTS_DIR / f"{today}.json"
     if path.exists():
         return False
+    if not _live_data_fresh(data):
+        return False
     save_snapshot(data)
+    return True
+
+
+def _live_data_fresh(data: dict[str, Any]) -> bool:
+    """True if every live_source account has a `_live` override applied."""
+    for acc in data.get("accounts", []):
+        if acc.get("live_source") and not acc.get("_live"):
+            return False
     return True
 
 
