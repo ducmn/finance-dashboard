@@ -451,6 +451,34 @@ body {
 }
 
 /* ---- Sweep waterfall ---- */
+.sweep-action {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow);
+}
+.sweep-action.done { opacity: 0.65; background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+.sweep-action label {
+  display: flex; gap: 14px; align-items: flex-start;
+  cursor: pointer;
+}
+.sweep-action input[type="checkbox"] {
+  width: 22px; height: 22px;
+  accent-color: white;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+.sweep-action-headline { font-size: 1.05em; line-height: 1.4; }
+.sweep-action-headline strong { font-weight: 700; }
+.sweep-action-meta {
+  font-size: 0.86em;
+  color: rgba(255, 255, 255, 0.85);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
 .sweep-sources {
   display: grid;
   grid-template-columns: auto auto auto auto;

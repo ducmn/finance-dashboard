@@ -2,8 +2,14 @@ import React, { useEffect, useState } from 'react'
 import api from '../services/api'
 import { formatGbp, formatGbpPrecise } from '../utils/format'
 
+const SWEEP_DONE_KEY = 'finance-dashboard:sweep-done'
+
 export default function SweepWaterfall() {
   const [data, setData] = useState(null)
+  const [doneMonths, setDoneMonths] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(SWEEP_DONE_KEY) || '{}') }
+    catch { return {} }
+  })
 
   useEffect(() => {
     api.getSweepPlan().then(setData).catch(() => setData(null))
@@ -12,12 +18,41 @@ export default function SweepWaterfall() {
   if (!data || !data.enabled) return null
 
   const sweepable = data.sources.some(s => s.spare > 0)
+  const activePriority = data.priorities.find(p => !p.is_full && p.amount > 0)
+  const monthKey = new Date().toISOString().slice(0, 7) // YYYY-MM
+  const monthDone = !!doneMonths[monthKey]
+
+  const toggleDone = () => {
+    const next = { ...doneMonths, [monthKey]: !monthDone }
+    if (!next[monthKey]) delete next[monthKey]
+    setDoneMonths(next)
+    localStorage.setItem(SWEEP_DONE_KEY, JSON.stringify(next))
+  }
 
   return (
     <section className="sweep">
       <h2 className="section-title">
-        Sweep waterfall <small>£{data.spare_total.toFixed(2)} spare</small>
+        Sweep waterfall <small>monthly, after salary lands</small>
       </h2>
+
+      {sweepable && activePriority && (
+        <div className={`sweep-action ${monthDone ? 'done' : ''}`}>
+          <label>
+            <input type="checkbox" checked={monthDone} onChange={toggleDone} />
+            <div>
+              <div className="sweep-action-headline">
+                Move <strong>{formatGbpPrecise(activePriority.amount)}</strong> to{' '}
+                <strong>{activePriority.destination_name}</strong>
+              </div>
+              <div className="sweep-action-meta">
+                Sweep {data.sources.filter(s => s.spare > 0).map(s => `${formatGbpPrecise(s.spare)} from ${prettySpace(s.space)}`).join(' + ')}.
+                Best done once a month, a few days after salary lands and bills have settled.
+                {monthDone && <> · ✓ done for {monthKey}</>}
+              </div>
+            </div>
+          </label>
+        </div>
+      )}
 
       <div className="sweep-sources">
         <div className="sweep-sources-label">Sources</div>
