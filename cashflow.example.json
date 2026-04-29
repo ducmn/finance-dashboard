@@ -1,6 +1,6 @@
 {
   "currency": "GBP",
-  "_note": "Edit `amount` to update a recurring figure permanently. Use `actuals` (e.g. \"2025-06\": -1960.83) to record what was actually paid in a specific month — the projection picks the actual over the planned amount when present.",
+  "_note": "Edit `amount` to update a recurring figure permanently. Use `actuals` (e.g. \"2025-06\": -1234.56) to record what was actually paid in a specific month — the projection picks the actual over the planned amount when present.",
 
   "spaces": [
     { "id": "monthly_bills", "name": "Monthly Bills" },
