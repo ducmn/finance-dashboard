@@ -74,12 +74,6 @@ export default function NetWorthHistory() {
 
       <div className="networth-history-stats">
         <div className="stat-card">
-          <div className="stat-label">Change</div>
-          <div className={`stat-value ${delta >= 0 ? 'positive' : 'negative'}`}>
-            {delta >= 0 ? '+' : ''}{formatGbp(delta)}
-          </div>
-        </div>
-        <div className="stat-card">
           <div className="stat-label">Run-rate / month</div>
           <div className={`stat-value ${monthlyRate >= 0 ? 'positive' : 'negative'}`}>
             {monthlyRate >= 0 ? '+' : ''}{formatGbp(monthlyRate)}
