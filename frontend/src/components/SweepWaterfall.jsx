@@ -60,18 +60,12 @@ export default function SweepWaterfall() {
           <div key={s.space} className="sweep-source">
             <span className="sweep-source-name">{prettySpace(s.space)}</span>
             <span className="sweep-source-balance">{formatGbpPrecise(s.balance)}</span>
-            <span className="sweep-source-need" title={bufferReason(s.space, s.buffer)}>
-              needs {formatGbp(s.buffer)} for upcoming
-            </span>
             <span className={`sweep-source-spare ${s.spare > 0 ? 'positive' : 'muted'}`}>
-              {s.spare > 0 ? `+${formatGbpPrecise(s.spare)}` : 'no spare'}
+              {s.spare > 0 ? `sweep ${formatGbpPrecise(s.spare)}` : 'nothing to sweep'}
             </span>
           </div>
         ))}
       </div>
-      <p className="sweep-buffer-note">
-        Spaces aren't swept to zero because they have upcoming obligations: Monthly Bills funds the next council-tax/internet/etc. round; Discretionary funds the next weekly £300 Friday transfer. Only the surplus above those commitments is swept. Adjust <code>min_buffer</code> in <code>cashflow.json</code> if you want to be more or less aggressive.
-      </p>
 
       {!sweepable ? (
         <div className="sweep-empty">
@@ -146,8 +140,3 @@ function prettySpace(id) {
   return map[id] || id
 }
 
-function bufferReason(space, buffer) {
-  if (space === 'monthly_bills') return `Funds next round of council tax / OVO / Hyperoptic / etc. plus £42 O2 roaming reserve`
-  if (space === 'discretionary') return `Funds the next weekly £300 Friday transfer`
-  return `Required safety floor`
-}
