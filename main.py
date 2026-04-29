@@ -28,6 +28,7 @@ from tax import project_btl_tax
 from goals import list_goals
 from suggestions import compute_suggestions
 from sweep import compute_sweep_plan
+from income import income_overview
 
 app = FastAPI(title="Finance Dashboard", version="2.0.0")
 
@@ -130,6 +131,11 @@ def get_payday_suggestions():
 @app.get("/api/sweep")
 def get_sweep_plan():
     return compute_sweep_plan()
+
+
+@app.get("/api/income")
+def get_income_overview():
+    return income_overview()
 
 
 @app.get("/api/starling/summary")
