@@ -600,6 +600,43 @@ body {
 .sweep-step-meta .muted { color: var(--text-muted); font-style: italic; }
 
 /* ---- Pay day plan ---- */
+.weekly-transfer {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  box-shadow: var(--shadow-sm);
+  border-left: 4px solid var(--accent);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.weekly-transfer-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 1.4em;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.weekly-transfer-body { flex: 1; }
+.weekly-transfer-headline {
+  font-size: 0.98em;
+  line-height: 1.4;
+}
+.weekly-transfer-headline strong {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.weekly-transfer-meta {
+  font-size: 0.84em;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
 .payday-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));

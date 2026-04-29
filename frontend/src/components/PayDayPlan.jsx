@@ -34,6 +34,13 @@ export default function PayDayPlan() {
     return out
   }, [projection])
 
+  const nextWeekly = useMemo(() => {
+    if (!projection) return null
+    return projection.events.find(
+      e => e.direction === 'transfer' && e.id === 'discretionary-weekly'
+    ) || null
+  }, [projection])
+
   if (!projection || upcomingIncomes.length === 0) return null
 
   const setStep = (key, val) => {
@@ -52,6 +59,20 @@ export default function PayDayPlan() {
   return (
     <section className="payday">
       <h2 className="section-title">Pay day plan</h2>
+
+      {nextWeekly && (
+        <div className="weekly-transfer">
+          <div className="weekly-transfer-icon">→</div>
+          <div className="weekly-transfer-body">
+            <div className="weekly-transfer-headline">
+              Every Friday: move <strong>{formatGbpPrecise(Math.abs(nextWeekly.amount))}</strong> from Discretionary to current account
+            </div>
+            <div className="weekly-transfer-meta">
+              Next: {formatDate(nextWeekly.date)} · your weekly spending allowance
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="payday-grid">
         {upcomingIncomes.map(ev => {
