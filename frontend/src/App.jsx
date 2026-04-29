@@ -91,8 +91,8 @@ export default function App() {
       <NetWorthHero networth={networth} snapshots={snapshots} />
       <NetWorthHistory />
       <IncomeOverview />
-      <PayDayPlan />
       <SweepWaterfall />
+      <PayDayPlan />
       <AccountsList accounts={accounts} />
       <BillsBreakdown />
       <BtlTaxPanel />

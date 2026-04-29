@@ -32,7 +32,7 @@ export default function SweepWaterfall() {
   return (
     <section className="sweep">
       <h2 className="section-title">
-        Sweep waterfall <small>monthly, after salary lands</small>
+        Sweep waterfall <small>do this before pay day</small>
       </h2>
 
       {sweepable && activePriority && (
@@ -46,7 +46,7 @@ export default function SweepWaterfall() {
               </div>
               <div className="sweep-action-meta">
                 Sweep {data.sources.filter(s => s.spare > 0).map(s => `${formatGbpPrecise(s.spare)} from ${prettySpace(s.space)}`).join(' + ')}.
-                Best done once a month, a few days after salary lands and bills have settled.
+                Best done the day before salary lands (≈24th), so the next pay day starts from a clean baseline.
                 {monthDone && <> · ✓ done for {monthKey}</>}
               </div>
             </div>
