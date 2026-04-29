@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react'
 import api from './services/api'
 import HealthBanner from './components/HealthBanner'
 import NetWorthHero from './components/NetWorthHero'
-import NetWorthHistory from './components/NetWorthHistory'
 import IncomeOverview from './components/IncomeOverview'
 import PayDayPlan from './components/PayDayPlan'
 import SweepWaterfall from './components/SweepWaterfall'
@@ -89,7 +88,6 @@ export default function App() {
 
       <HealthBanner />
       <NetWorthHero networth={networth} snapshots={snapshots} />
-      <NetWorthHistory />
       <IncomeOverview />
       <SweepWaterfall />
       <PayDayPlan />
