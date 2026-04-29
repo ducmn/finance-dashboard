@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import api from '../services/api'
-import { formatGbp, formatGbpPrecise } from '../utils/format'
+import { formatGbp } from '../utils/format'
+
+// PLSA Retirement Living Standards (single, UK 2024/25, ex-London):
+//   Minimum £14,400/yr · Moderate £31,300/yr · Comfortable £43,100/yr
+const COMFORTABLE = 43000
+const MODERATE = 30000
 
 export default function PensionForecast() {
   const [data, setData] = useState(null)
@@ -10,33 +15,39 @@ export default function PensionForecast() {
   }, [])
 
   if (!data) return null
-
-  const dc = data.dc_pensions
   const inc = data.estimated_retirement_income
+  const dc = data.dc_pensions
+  const total = inc.combined_annual
+
+  let status, verdict
+  if (total >= COMFORTABLE) {
+    status = 'ok'
+    verdict = (
+      <>You'll be comfortable in retirement: <strong>{formatGbp(total)}/yr</strong> ({formatGbp(inc.combined_monthly)}/mo).</>
+    )
+  } else if (total >= MODERATE) {
+    status = 'moderate'
+    verdict = (
+      <>Retirement income lands at <strong>{formatGbp(total)}/yr</strong> — moderate band, could be tighter than you'd like.</>
+    )
+  } else {
+    status = 'risk'
+    verdict = (
+      <>Retirement looks light at <strong>{formatGbp(total)}/yr</strong> — consider boosting pension contributions.</>
+    )
+  }
 
   return (
-    <section className="pension compact">
-      <h2 className="section-title">
-        Retirement <small>SPA {data.state_pension_age_date} · {data.years_to_state_pension}y · @ {data.assumed_return_pct}%/yr</small>
-      </h2>
-
-      <div className="pension-row">
-        <div className="pension-cell">
-          <div className="info-label">DC pots today</div>
-          <div className="info-value">{formatGbpPrecise(dc.current_total)}</div>
-        </div>
-        <div className="pension-cell highlight">
-          <div className="info-label">Projected at SPA</div>
-          <div className="info-value">{formatGbp(dc.projected_total_at_spa)}</div>
-        </div>
-        <div className="pension-cell">
-          <div className="info-label">State pension</div>
-          <div className="info-value">{formatGbp(data.state_pension.annual)}/yr</div>
-        </div>
-        <div className="pension-cell positive">
-          <div className="info-label">Combined retirement income</div>
-          <div className="info-value">{formatGbp(inc.combined_annual)}/yr</div>
-          <div className="info-meta">≈ {formatGbp(inc.combined_monthly)}/mo (state + 4% DC)</div>
+    <section className="retirement">
+      <h2 className="section-title">Retirement</h2>
+      <div className={`btl-verdict ${status === 'ok' ? 'ok' : 'risk'}`}>
+        <div className="btl-verdict-icon">{status === 'ok' ? '✓' : status === 'moderate' ? '⚠' : '✗'}</div>
+        <div className="btl-verdict-body">
+          <div className="btl-verdict-headline">{verdict}</div>
+          <div className="btl-verdict-meta">
+            State pension {formatGbp(data.state_pension.annual)}/yr from {data.state_pension_age_date} ({data.years_to_state_pension}y away)
+            {' + '}DC pots projected to {formatGbp(dc.projected_total_at_spa)} @ {data.assumed_return_pct}%/yr → {formatGbp(inc.dc_annual_4pct_rule)}/yr at 4% safe-withdrawal.
+          </div>
         </div>
       </div>
     </section>
