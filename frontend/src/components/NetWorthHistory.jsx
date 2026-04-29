@@ -32,7 +32,12 @@ export default function NetWorthHistory() {
     1,
     Math.round((new Date(last.date) - new Date(first.date)) / (1000 * 60 * 60 * 24)),
   )
-  const monthlyRate = (delta / days) * 30
+  // Extrapolating 1-3 days of data to a monthly run-rate gives ridiculous
+  // numbers (a £100 daily blip becomes £3,000/mo). Hide the stat until
+  // there's enough history for the rate to mean something.
+  const MIN_DAYS_FOR_RUN_RATE = 14
+  const haveEnoughDataForRunRate = days >= MIN_DAYS_FOR_RUN_RATE
+  const monthlyRate = haveEnoughDataForRunRate ? (delta / days) * 30 : null
 
   const data = {
     labels: sorted.map(s => s.date),
@@ -72,14 +77,16 @@ export default function NetWorthHistory() {
         Net worth history <small>{sorted.length} snapshots · {formatDate(first.date)} → {formatDate(last.date)}</small>
       </h2>
 
-      <div className="networth-history-stats">
-        <div className="stat-card">
-          <div className="stat-label">Run-rate / month</div>
-          <div className={`stat-value ${monthlyRate >= 0 ? 'positive' : 'negative'}`}>
-            {monthlyRate >= 0 ? '+' : ''}{formatGbp(monthlyRate)}
+      {haveEnoughDataForRunRate && (
+        <div className="networth-history-stats">
+          <div className="stat-card">
+            <div className="stat-label">Run-rate / month</div>
+            <div className={`stat-value ${monthlyRate >= 0 ? 'positive' : 'negative'}`}>
+              {monthlyRate >= 0 ? '+' : ''}{formatGbp(monthlyRate)}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="chart-card">
         <div className="chart-wrapper" style={{ height: 260 }}>
