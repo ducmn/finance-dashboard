@@ -19,39 +19,21 @@ export default function App() {
   const [snapshots, setSnapshots] = useState([])
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [savingSnapshot, setSavingSnapshot] = useState(false)
 
-  const load = async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const [nw, acc, snaps] = await Promise.all([
-        api.getNetworth(),
-        api.getAccounts(),
-        api.getSnapshots(),
-      ])
-      setNetworth(nw)
-      setAccounts(acc)
-      setSnapshots(snaps)
-    } catch (err) {
-      setError(err?.message || 'Failed to load dashboard')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => { load() }, [])
-
-  const onSaveSnapshot = async () => {
-    try {
-      setSavingSnapshot(true)
-      await api.saveSnapshot()
-      const snaps = await api.getSnapshots()
-      setSnapshots(snaps)
-    } finally {
-      setSavingSnapshot(false)
-    }
-  }
+  useEffect(() => {
+    Promise.all([
+      api.getNetworth(),
+      api.getAccounts(),
+      api.getSnapshots(),
+    ])
+      .then(([nw, acc, snaps]) => {
+        setNetworth(nw)
+        setAccounts(acc)
+        setSnapshots(snaps)
+      })
+      .catch(err => setError(err?.message || 'Failed to load dashboard'))
+      .finally(() => setLoading(false))
+  }, [])
 
   if (loading) {
     return (
@@ -69,12 +51,6 @@ export default function App() {
         <div>
           <h1>Finance Dashboard</h1>
           <p className="subtitle">Net worth, investments, spending and retirement — one place.</p>
-        </div>
-        <div className="topbar-actions">
-          <button className="btn ghost" onClick={load}>↻ Refresh</button>
-          <button className="btn" onClick={onSaveSnapshot} disabled={savingSnapshot}>
-            {savingSnapshot ? 'Saving…' : '＋ Snapshot'}
-          </button>
         </div>
       </header>
 
