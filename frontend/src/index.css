@@ -503,7 +503,13 @@ body {
 .sweep-source { display: contents; }
 .sweep-source-name { font-weight: 600; }
 .sweep-source-balance { color: var(--text); }
-.sweep-source-buffer { color: var(--text-muted); font-size: 0.9em; }
+.sweep-source-need { color: var(--text-muted); font-size: 0.9em; cursor: help; }
+.sweep-buffer-note {
+  font-size: 0.85em;
+  color: var(--text-muted);
+  margin-top: 10px;
+  line-height: 1.5;
+}
 .sweep-source-spare { font-weight: 600; text-align: right; }
 .sweep-source-spare.positive { color: var(--positive); }
 .sweep-source-spare.muted { color: var(--text-muted); }
