@@ -68,9 +68,10 @@ function sumOf(items) {
 
 function computeChange(networth, snapshots) {
   if (!snapshots || snapshots.length === 0) return null
-  const last = snapshots[snapshots.length - 1]
+  const sorted = [...snapshots].sort((a, b) => a.date.localeCompare(b.date))
+  const first = sorted[0]
   return {
-    delta: networth.net_worth - last.net_worth,
-    from: last.date,
+    delta: networth.net_worth - first.net_worth,
+    from: first.date,
   }
 }
