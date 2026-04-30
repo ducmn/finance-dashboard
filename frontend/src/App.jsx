@@ -16,7 +16,6 @@ import PensionForecast from './components/PensionForecast'
 export default function App() {
   const [networth, setNetworth] = useState(null)
   const [accounts, setAccounts] = useState(null)
-  const [snapshots, setSnapshots] = useState([])
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -24,12 +23,10 @@ export default function App() {
     Promise.all([
       api.getNetworth(),
       api.getAccounts(),
-      api.getSnapshots(),
     ])
-      .then(([nw, acc, snaps]) => {
+      .then(([nw, acc]) => {
         setNetworth(nw)
         setAccounts(acc)
-        setSnapshots(snaps)
       })
       .catch(err => setError(err?.message || 'Failed to load dashboard'))
       .finally(() => setLoading(false))
@@ -63,7 +60,7 @@ export default function App() {
       )}
 
       <HealthBanner />
-      <NetWorthHero networth={networth} snapshots={snapshots} />
+      <NetWorthHero networth={networth} />
       <IncomeOverview />
       <SweepWaterfall />
       <PayDayPlan />

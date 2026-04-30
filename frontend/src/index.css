@@ -164,14 +164,6 @@ body {
   margin-top: 6px;
   color: var(--text);
 }
-.hero-change {
-  margin-top: 6px;
-  font-weight: 600;
-  font-size: 0.95em;
-}
-.hero-change.positive { color: var(--positive); }
-.hero-change.negative { color: var(--negative); }
-.hero-change-meta { color: var(--text-muted); font-weight: 400; margin-left: 6px; }
 
 .hero-breakdown { display: flex; flex-direction: column; gap: 16px; }
 .breakdown-row .breakdown-row-head {

@@ -6,22 +6,14 @@ const PALETTE = [
   '#3b82f6', '#a855f7', '#14b8a6', '#f43f5e',
 ]
 
-export default function NetWorthHero({ networth, snapshots }) {
+export default function NetWorthHero({ networth }) {
   if (!networth) return null
-
-  const change = computeChange(networth, snapshots)
 
   return (
     <section className="hero">
       <div className="hero-main">
         <div className="hero-label">Total Net Worth</div>
         <div className="hero-value">{formatGbp(networth.net_worth)}</div>
-        {change && (
-          <div className={`hero-change ${change.delta >= 0 ? 'positive' : 'negative'}`}>
-            {change.delta >= 0 ? '▲' : '▼'} {formatGbp(Math.abs(change.delta))}
-            <span className="hero-change-meta"> since {change.from}</span>
-          </div>
-        )}
       </div>
 
       <div className="hero-allocation">
@@ -64,14 +56,4 @@ function AllocationBar({ items }) {
 
 function sumOf(items) {
   return items.reduce((s, x) => s + Number(x.value || 0), 0)
-}
-
-function computeChange(networth, snapshots) {
-  if (!snapshots || snapshots.length === 0) return null
-  const sorted = [...snapshots].sort((a, b) => a.date.localeCompare(b.date))
-  const first = sorted[0]
-  return {
-    delta: networth.net_worth - first.net_worth,
-    from: first.date,
-  }
 }
