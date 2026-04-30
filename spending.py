@@ -67,7 +67,9 @@ def _all_feed_items(months: int = 12, force: bool = False) -> list[dict[str, Any
     try:
         accounts = c.list_accounts()
     except StarlingError:
-        return []
+        # Couldn't even list accounts (typically 429). Fall through to disk
+        # fallback below rather than returning empty silently.
+        accounts = []
 
     for acc in accounts:
         category_uid = acc.get("defaultCategory")
