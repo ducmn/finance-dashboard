@@ -28,7 +28,10 @@ export default function HealthBanner() {
   const { networth, spending, suggestions, pension } = data
   const high = suggestions.filter(s => s.severity === 'high')
   const medium = suggestions.filter(s => s.severity === 'medium')
-  const savingsRate = spending.income > 0 ? (spending.net / spending.income) * 100 : 0
+  const spendingLoaded = !!spending?.loaded
+  const savingsRate = spendingLoaded && spending.income > 0
+    ? (spending.net / spending.income) * 100
+    : null
   const retirementIncome = pension?.estimated_retirement_income?.combined_annual
 
   const { status, verdict } = computeVerdict({
@@ -46,10 +49,12 @@ export default function HealthBanner() {
         <div className="health-verdict">{verdict}</div>
         <div className="health-pills">
           <span className="health-pill">Net worth <strong>{formatGbp(networth.net_worth)}</strong></span>
-          <span className="health-pill">
-            Savings rate <strong>{savingsRate.toFixed(0)}%</strong>
-            <small> · 12mo</small>
-          </span>
+          {savingsRate != null && (
+            <span className="health-pill">
+              Savings rate <strong>{savingsRate.toFixed(0)}%</strong>
+              <small> · 12mo</small>
+            </span>
+          )}
           {retirementIncome != null && (
             <span className="health-pill">
               Retirement <strong>{formatGbp(retirementIncome)}/yr</strong>
@@ -67,7 +72,9 @@ export default function HealthBanner() {
 }
 
 function computeVerdict({ high, medium, savingsRate, firstHigh, suggestions }) {
-  if (savingsRate < 10) {
+  // savingsRate === null means spending data couldn't be loaded — don't
+  // false-flag a red 'spending more than you earn' verdict in that case.
+  if (savingsRate != null && savingsRate < 10) {
     return {
       status: 'red',
       verdict: `Spending more than you earn — savings rate ${savingsRate.toFixed(0)}%. ${high > 0 ? firstHigh.title + '.' : 'Tighten up before tackling longer-term goals.'}`,
@@ -81,12 +88,18 @@ function computeVerdict({ high, medium, savingsRate, firstHigh, suggestions }) {
         : `${high} things need attention — start with: ${firstHigh.title}.`,
     }
   }
-  if (medium > 0 || savingsRate < 20) {
+  if (medium > 0 || (savingsRate != null && savingsRate < 20)) {
     return {
       status: 'amber',
-      verdict: savingsRate < 20
+      verdict: savingsRate != null && savingsRate < 20
         ? `Savings rate ${savingsRate.toFixed(0)}% is below target — bump it up if you can. ${suggestions.length} smaller suggestion${suggestions.length === 1 ? '' : 's'} below.`
         : `${medium} medium-priority item${medium === 1 ? '' : 's'} to look at, but nothing urgent.`,
+    }
+  }
+  if (savingsRate == null) {
+    return {
+      status: 'green',
+      verdict: `Net worth and accounts loaded; spending data temporarily unavailable. Nothing urgent.`,
     }
   }
   return {
