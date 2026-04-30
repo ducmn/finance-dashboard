@@ -67,6 +67,11 @@ def _apply_live_balances(data: dict[str, Any]) -> None:
     if not summary.get("configured") or summary.get("error") or not summary.get("accounts"):
         return
     primary = summary["accounts"][0]
+    # Inner balance/spaces fetch may have failed — primary then lacks the
+    # effective_balance / cleared_balance keys. Skip live override in that
+    # case so the static accounts.json value stays in place.
+    if "effective_balance" not in primary:
+        return
     primary_balance = primary["effective_balance"]
     for acc in data["accounts"]:
         ls = acc.get("live_source")
@@ -78,7 +83,7 @@ def _apply_live_balances(data: dict[str, Any]) -> None:
         acc["_live"] = {
             "provider": "starling",
             "balance": primary_balance,
-            "cleared_balance": primary["cleared_balance"],
+            "cleared_balance": primary.get("cleared_balance"),
             "main_balance": primary.get("main_balance"),
             "spaces_total": primary.get("spaces_total"),
             "spaces": primary.get("spaces", []),
