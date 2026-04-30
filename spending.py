@@ -103,10 +103,14 @@ def _all_feed_items(months: int = 12, force: bool = False) -> list[dict[str, Any
 
     items.sort(key=lambda x: x["date"])
     if items:
-        # Fresh fetch succeeded — update both in-memory and disk caches.
+        # Fresh fetch succeeded — update in-memory cache, and write to disk
+        # only if this covers at least as many months as what's already saved
+        # (don't shrink a 12-month disk cache by saving a 3-month fetch).
         _cache.update({"items": items, "fetched_at": time.time(), "months": months, "from_disk": False})
-        _save_disk_cache(items, months)
-        return items
+        existing = _load_disk_cache()
+        if existing is None or int(existing.get("months", 0)) <= months:
+            _save_disk_cache(items, months)
+        return _reapply_config(items)
 
     # Fetch returned nothing (every chunk likely 429'd). Fall back to disk
     # if available so the dashboard shows the last good state instead of zeros.
@@ -118,8 +122,29 @@ def _all_feed_items(months: int = 12, force: bool = False) -> list[dict[str, Any
             "months": int(disk.get("months", months)),
             "from_disk": True,
         })
-        return disk["items"]
+        return _reapply_config(disk["items"])
     return items
+
+
+def _reapply_config(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Re-run label + exclude config against an item list at read time.
+
+    Labels and excludes can be edited in cashflow.json without forcing a
+    fresh Starling fetch — running them here means changes take effect on
+    next page load even when serving from disk cache.
+    """
+    cfg = _config()
+    excludes = cfg["exclude_transactions"]
+    labels = cfg["transaction_labels"]
+    out = []
+    for it in items:
+        if _is_excluded_transaction(it["date"], it.get("party") or "", it["amount"], excludes):
+            continue
+        new_label = _apply_label(it.get("party") or "", it["date"], it["amount"], labels)
+        if new_label is not None or "label" in it:
+            it = {**it, "label": new_label}
+        out.append(it)
+    return out
 
 
 def _ts(dt: datetime) -> str:
@@ -365,8 +390,11 @@ def budget_status(year: int | None = None, month: int | None = None) -> dict[str
     if not budgets:
         return {"month": f"{year:04d}-{month:02d}", "budgets": []}
 
+    # Use the standard 12-month window so this endpoint shares the same
+    # cache as summary/top/categories — otherwise a 3-month fetch could
+    # overwrite the disk cache and shrink the dataset for top-10 etc.
     items = [
-        i for i in _all_feed_items(months=3)
+        i for i in _all_feed_items(months=12)
         if i["date"][:7] == f"{year:04d}-{month:02d}" and i["amount"] < 0
     ]
 
