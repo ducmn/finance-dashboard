@@ -147,7 +147,21 @@ def _config() -> dict[str, Any]:
         "category_overrides": data.get("category_overrides") or {},
         "category_budgets": data.get("category_budgets") or {},
         "transaction_labels": data.get("transaction_labels") or {},
+        "exclude_transactions": data.get("exclude_transactions") or [],
     }
+
+
+def _is_excluded_transaction(date: str, party: str, amount: float, excludes: list) -> bool:
+    """True if this transaction matches a date+party+amount excludes entry."""
+    party_lower = (party or "").lower()
+    for ex in excludes:
+        if (
+            ex.get("date") == date
+            and (ex.get("party") or "").lower() in party_lower
+            and abs(float(ex.get("amount", 0)) - amount) < 0.01
+        ):
+            return True
+    return False
 
 
 def _apply_label(party: str, date: str, amount: float, label_cfg: dict[str, Any]) -> str | None:
@@ -217,7 +231,10 @@ def _normalize(item: dict[str, Any]) -> dict[str, Any] | None:
     category = _apply_category_override(party, base_category, cfg["category_overrides"])
     txn_time = item.get("transactionTime") or ""
     date_str = txn_time[:10]
-    label = _apply_label(party, date_str, round(amount, 2), cfg["transaction_labels"])
+    rounded = round(amount, 2)
+    if _is_excluded_transaction(date_str, party, rounded, cfg["exclude_transactions"]):
+        return None
+    label = _apply_label(party, date_str, rounded, cfg["transaction_labels"])
     return {
         "id": item.get("feedItemUid"),
         "date": date_str,
