@@ -99,7 +99,16 @@ export default function SpendingPanel() {
             {topExpenses.map((t, i) => (
               <tr key={i}>
                 <td>{formatDate(t.date)}</td>
-                <td>{t.party}</td>
+                <td>
+                  {t.label ? (
+                    <>
+                      <strong>{t.label}</strong>
+                      <small className="muted-party"> · {t.party}</small>
+                    </>
+                  ) : (
+                    t.party
+                  )}
+                </td>
                 <td><span className="tag">{t.category}</span></td>
                 <td className="right amount-negative">{formatGbpPrecise(t.amount)}</td>
               </tr>

@@ -1093,6 +1093,7 @@ body {
   font-size: 0.78em;
   font-weight: 600;
 }
+.muted-party { color: var(--text-muted); font-size: 0.85em; }
 
 /* ---- Pension ---- */
 .pension-grid {

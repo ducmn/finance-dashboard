@@ -144,7 +144,28 @@ def _config() -> dict[str, Any]:
         "exclude_counterparties": [c.lower() for c in cfg.get("exclude_counterparties", [])],
         "category_overrides": data.get("category_overrides") or {},
         "category_budgets": data.get("category_budgets") or {},
+        "transaction_labels": data.get("transaction_labels") or {},
     }
+
+
+def _apply_label(party: str, date: str, amount: float, label_cfg: dict[str, Any]) -> str | None:
+    """Find a friendly label for the transaction, or None if no match."""
+    if not label_cfg:
+        return None
+    party_lower = (party or "").lower()
+    # Specific date+party+amount overrides take priority
+    for spec in label_cfg.get("specific") or []:
+        if (
+            spec.get("date") == date
+            and (spec.get("party") or "").lower() in party_lower
+            and abs(float(spec.get("amount", 0)) - amount) < 0.01
+        ):
+            return spec.get("label")
+    # Counter-party substring aliases
+    for needle, label in (label_cfg.get("counterparty_aliases") or {}).items():
+        if needle.lower() in party_lower:
+            return label
+    return None
 
 
 def _filter_config() -> dict[str, Any]:
@@ -193,11 +214,14 @@ def _normalize(item: dict[str, Any]) -> dict[str, Any] | None:
 
     category = _apply_category_override(party, base_category, cfg["category_overrides"])
     txn_time = item.get("transactionTime") or ""
+    date_str = txn_time[:10]
+    label = _apply_label(party, date_str, round(amount, 2), cfg["transaction_labels"])
     return {
         "id": item.get("feedItemUid"),
-        "date": txn_time[:10],
+        "date": date_str,
         "datetime": txn_time,
         "party": party,
+        "label": label,
         "category": category,
         "reference": item.get("reference") or "",
         "amount": round(amount, 2),
@@ -292,6 +316,7 @@ def top_transactions(limit: int = 15, kind: str = "expense", months: int = 12) -
         out.append({
             "date": it["date"],
             "party": it["party"],
+            "label": it.get("label"),
             "category": it["category"],
             "amount": it["amount"],
         })
