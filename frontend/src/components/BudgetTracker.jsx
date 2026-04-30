@@ -32,7 +32,7 @@ export default function BudgetTracker() {
   return (
     <section className="budgets">
       <h2 className="section-title">
-        Budgets <small>{monthLabel}</small>
+        Budgets <small>{monthLabel}{data.fallback_used && ' · current month data not yet cached'}</small>
       </h2>
       <div className="budgets-grid">
         {data.budgets.map(b => (

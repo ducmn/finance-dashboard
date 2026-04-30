@@ -393,10 +393,23 @@ def budget_status(year: int | None = None, month: int | None = None) -> dict[str
     # Use the standard 12-month window so this endpoint shares the same
     # cache as summary/top/categories — otherwise a 3-month fetch could
     # overwrite the disk cache and shrink the dataset for top-10 etc.
-    items = [
-        i for i in _all_feed_items(months=12)
-        if i["date"][:7] == f"{year:04d}-{month:02d}" and i["amount"] < 0
-    ]
+    all_items = _all_feed_items(months=12)
+    target_ym = f"{year:04d}-{month:02d}"
+    items = [i for i in all_items if i["date"][:7] == target_ym and i["amount"] < 0]
+    fallback_used = False
+    # If we asked for the current month but it's not in the cache (Starling
+    # rate-limited the most recent chunks), fall back to the most recent
+    # month that does have data — blank budgets are worse than slightly
+    # stale ones.
+    is_current_request = today.year == year and today.month == month
+    if not items and is_current_request and all_items:
+        recent_ym = max(i["date"][:7] for i in all_items)
+        if recent_ym != target_ym:
+            target_ym = recent_ym
+            year, month = int(recent_ym[:4]), int(recent_ym[5:7])
+            items = [i for i in all_items if i["date"][:7] == target_ym and i["amount"] < 0]
+            fallback_used = True
+            is_current_request = today.year == year and today.month == month
 
     spent: dict[str, float] = {cat: 0.0 for cat in budgets}
     spent_count: dict[str, int] = {cat: 0 for cat in budgets}
@@ -434,4 +447,8 @@ def budget_status(year: int | None = None, month: int | None = None) -> dict[str
         })
 
     out.sort(key=lambda x: -x["actual"])
-    return {"month": f"{year:04d}-{month:02d}", "budgets": out}
+    return {
+        "month": f"{year:04d}-{month:02d}",
+        "budgets": out,
+        "fallback_used": fallback_used,
+    }
