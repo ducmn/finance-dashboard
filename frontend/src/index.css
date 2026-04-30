@@ -832,6 +832,15 @@ body {
 }
 .bills-item-amount { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
 .bills-item-amount small { display: block; color: var(--text-muted); font-size: 0.78em; font-weight: 400; }
+.bills-reserve {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 0.85em;
+  color: var(--text-muted);
+}
+.bills-reserve strong { color: var(--text); font-variant-numeric: tabular-nums; }
+.bills-reserve small { color: var(--text-muted); }
 
 /* ---- Compact pension ---- */
 .pension.compact .pension-row {

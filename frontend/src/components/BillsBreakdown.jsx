@@ -52,6 +52,11 @@ export default function BillsBreakdown() {
                 </li>
               ))}
             </ul>
+            {g.space === 'monthly_bills' && (
+              <div className="bills-reserve">
+                + <strong>£42</strong> O2 roaming reserve <small>(idle in space, only used abroad)</small>
+              </div>
+            )}
           </div>
         ))}
       </div>
