@@ -23,25 +23,30 @@ def compute_suggestions() -> dict[str, Any]:
     suggestions: list[dict[str, Any]] = []
 
     # 1. Annual Bills deficit → one-off top-up
-    proj = project_with_live_balances(months=12)
-    annual = next((s for s in proj.get("spaces", []) if s["id"] == "annual_bills"), None)
-    if annual and annual.get("in_deficit"):
-        gap = round(abs(annual["min_balance"]["value"]), 2)
-        suggestions.append({
-            "kind": "topup",
-            "severity": "high",
-            "title": f"Top up Annual Bills by £{gap:,.0f} as a one-off",
-            "reason": (
-                f"Projected to dip to {annual['min_balance']['value']:,.2f} on "
-                f"{annual['min_balance']['date']} ({annual['min_balance'].get('event') or 'bill'}). "
-                "Recurring contribution alone is enough year-on-year, but the buffer is needed to "
-                "absorb the December service charge."
-            ),
-            "action": f"Move £{gap:,.0f} from Discretionary or Emergency to the Annual Bills space "
-                      "before the next service charge lands.",
-            "amount": gap,
-            "space": "annual_bills",
-        })
+    try:
+        proj = project_with_live_balances(months=12)
+        annual = next((s for s in proj.get("spaces", []) if s["id"] == "annual_bills"), None)
+        if annual and annual.get("in_deficit"):
+            gap = round(abs(annual["min_balance"]["value"]), 2)
+            suggestions.append({
+                "kind": "topup",
+                "severity": "high",
+                "title": f"Top up Annual Bills by £{gap:,.0f} as a one-off",
+                "reason": (
+                    f"Projected to dip to {annual['min_balance']['value']:,.2f} on "
+                    f"{annual['min_balance']['date']} ({annual['min_balance'].get('event') or 'bill'}). "
+                    "Recurring contribution alone is enough year-on-year, but the buffer is needed to "
+                    "absorb the December service charge."
+                ),
+                "action": f"Move £{gap:,.0f} from Discretionary or Emergency to the Annual Bills space "
+                          "before the next service charge lands.",
+                "amount": gap,
+                "space": "annual_bills",
+            })
+    except Exception:
+        # Don't let a transient projection failure (e.g. Starling 429 mid-fetch)
+        # silently drop the deficit warning. Other suggestions still compute.
+        pass
 
     # 2. BTL Tax allocation drift
     try:
