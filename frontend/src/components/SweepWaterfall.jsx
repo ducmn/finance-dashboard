@@ -128,6 +128,7 @@ function addPct(p) {
 
 function prettySpace(id) {
   const map = {
+    main_account: 'Starling main',
     discretionary: 'Discretionary',
     monthly_bills: 'Monthly Bills',
     annual_bills: 'Annual Bills',

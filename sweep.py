@@ -90,7 +90,8 @@ def compute_sweep_plan() -> dict[str, Any]:
 
 
 def _live_space_balances(cashflow: dict[str, Any]) -> dict[str, float]:
-    """Map cashflow space ID -> live Starling balance."""
+    """Map cashflow space ID -> live Starling balance, plus 'main_account'
+    as a special id for the primary account's main balance (excluding spaces)."""
     balances: dict[str, float] = {}
     try:
         from starling import fetch_summary
@@ -103,6 +104,9 @@ def _live_space_balances(cashflow: dict[str, Any]) -> dict[str, float]:
             if s.get("starling_uid")
         }
         for acc in summary["accounts"]:
+            main = acc.get("main_balance")
+            if main is not None:
+                balances["main_account"] = float(main)
             for space in acc.get("spaces", []):
                 sid = uid_to_sid.get(space["uid"])
                 if sid:
