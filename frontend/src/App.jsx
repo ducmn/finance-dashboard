@@ -12,6 +12,7 @@ import BtlTaxPanel from './components/BtlTaxPanel'
 import LifeGoals from './components/LifeGoals'
 import SpendingPanel from './components/SpendingPanel'
 import PensionForecast from './components/PensionForecast'
+import RefreshButton from './components/RefreshButton'
 
 export default function App() {
   const [networth, setNetworth] = useState(null)
@@ -73,7 +74,8 @@ export default function App() {
       <PensionForecast />
 
       <footer className="foot">
-        Data sources: {networth?.source} · Last refreshed {new Date(networth?.as_of).toLocaleString('en-GB')}
+        <div>Data sources: {networth?.source} · Last refreshed {new Date(networth?.as_of).toLocaleString('en-GB')}</div>
+        <RefreshButton />
       </footer>
     </div>
   )

@@ -1183,6 +1183,29 @@ body {
   text-align: center;
   color: var(--text-muted);
   font-size: 0.85em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.refresh-btn {
+  background: white;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.82em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.refresh-btn:hover:not(:disabled) {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .loading {

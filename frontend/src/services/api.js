@@ -31,6 +31,7 @@ const api = {
   getPaydaySuggestions: () => client.get('/payday/suggestions').then(r => r.data),
   getSweepPlan: () => client.get('/sweep').then(r => r.data),
   getIncomeOverview: () => client.get('/income').then(r => r.data),
+  forceReload: () => client.post('/reload').then(r => r.data),
 }
 
 export default api
